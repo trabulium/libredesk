@@ -437,6 +437,18 @@ const updateAIProvider = (data) => http.put('/api/v1/ai/provider', data, {
     'Content-Type': 'application/json'
   }
 })
+const getAIProviders = () => http.get('/api/v1/ai/providers')
+const getAvailableModels = () => http.get('/api/v1/ai/models')
+const setDefaultAIProvider = (data) => http.put('/api/v1/ai/provider/default', data, {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+const testAIProvider = (data) => http.post('/api/v1/ai/provider/test', data, {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
 const getContactNotes = (id) => http.get(`/api/v1/contacts/${id}/notes`)
 const createContactNote = (id, data) => http.post(`/api/v1/contacts/${id}/notes`, data, {
   headers: {
@@ -614,6 +626,10 @@ export default {
   deleteSharedView,
   getAiPrompts,
   aiCompletion,
+  getAIProviders,
+  getAvailableModels,
+  setDefaultAIProvider,
+  testAIProvider,
   searchConversations,
   searchMessages,
   searchContacts,
