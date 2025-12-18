@@ -61,6 +61,8 @@ const searchContacts = (params) => http.get('/api/v1/contacts/search', { params 
 const getEmailNotificationSettings = () => http.get('/api/v1/settings/notifications/email')
 const updateEmailNotificationSettings = (data) =>
   http.put('/api/v1/settings/notifications/email', data)
+const testEmailNotificationSettings = (data) =>
+  http.post("/api/v1/settings/notifications/email/test", data)
 const getPriorities = () => http.get('/api/v1/priorities')
 const getStatuses = () => http.get('/api/v1/statuses')
 const createStatus = (data) => http.post('/api/v1/statuses', data)
@@ -396,6 +398,30 @@ const updateAIProvider = (data) => http.put('/api/v1/ai/provider', data, {
     'Content-Type': 'application/json'
   }
 })
+const getAIProviders = () => http.get('/api/v1/ai/providers')
+const getAvailableModels = () => http.get('/api/v1/ai/models')
+const setDefaultAIProvider = (data) => http.put('/api/v1/ai/provider/default', data, {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+const testAIProvider = (data) => http.post('/api/v1/ai/provider/test', data, {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
+// RAG Knowledge Sources
+const getRAGSources = () => http.get("/api/v1/rag/sources")
+const getRAGSource = (id) => http.get(`/api/v1/rag/sources/${id}`)
+const createRAGSource = (data) => http.post("/api/v1/rag/sources", data)
+const updateRAGSource = (id, data) => http.put(`/api/v1/rag/sources/${id}`, data)
+const deleteRAGSource = (id) => http.delete(`/api/v1/rag/sources/${id}`)
+const syncRAGSource = (id) => http.post(`/api/v1/rag/sources/${id}/sync`)
+const ragSearch = (data) => http.post("/api/v1/rag/search", data)
+const ragGenerate = (data) => http.post("/api/v1/rag/generate", data)
+const getAISettings = () => http.get("/api/v1/settings/ai")
+const updateAISettings = (data) => http.put("/api/v1/settings/ai", data)
 const getContactNotes = (id) => http.get(`/api/v1/contacts/${id}/notes`)
 const createContactNote = (id, data) => http.post(`/api/v1/contacts/${id}/notes`, data, {
   headers: {
@@ -536,12 +562,27 @@ export default {
   getUsersCompact,
   getEmailNotificationSettings,
   updateEmailNotificationSettings,
+  testEmailNotificationSettings,
   getCurrentUserViews,
   createView,
   updateView,
   deleteView,
   getAiPrompts,
   aiCompletion,
+  getAIProviders,
+  getAvailableModels,
+  setDefaultAIProvider,
+  testAIProvider,
+  getRAGSources,
+  getRAGSource,
+  createRAGSource,
+  updateRAGSource,
+  deleteRAGSource,
+  syncRAGSource,
+  ragSearch,
+  ragGenerate,
+  getAISettings,
+  updateAISettings,
   searchConversations,
   searchMessages,
   searchContacts,
