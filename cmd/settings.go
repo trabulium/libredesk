@@ -2,12 +2,12 @@ package main
 
 import (
 	"crypto/tls"
-	"fmt"
-	"net/smtp"
-	"time"
 	"encoding/json"
+	"fmt"
 	"net/mail"
+	"net/smtp"
 	"strings"
+	"time"
 
 	"github.com/abhinavxd/libredesk/internal/envelope"
 	"github.com/abhinavxd/libredesk/internal/setting/models"
@@ -366,6 +366,7 @@ func (a *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 	}
 	return nil, nil
 }
+
 // handleGetAISettings fetches AI settings.
 func handleGetAISettings(r *fastglue.Request) error {
 	var (
@@ -426,11 +427,6 @@ func handleUpdateAISettings(r *fastglue.Request) error {
 
 	if err := app.setting.Update(req); err != nil {
 		return sendErrorEnvelope(r, err)
-	}
-
-	// Reload the settings
-	if err := reloadSettings(app); err != nil {
-		return sendErrorEnvelope(r, envelope.NewError(envelope.GeneralError, app.i18n.Ts("globals.messages.couldNotReload", "name", app.i18n.T("globals.terms.setting")), nil))
 	}
 
 	return r.SendEnvelope(true)

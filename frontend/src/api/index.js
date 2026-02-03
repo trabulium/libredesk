@@ -628,6 +628,7 @@ export default {
   getUsersCompact,
   getEmailNotificationSettings,
   updateEmailNotificationSettings,
+  testEmailNotificationSettings,
   saveDraft,
   getAllDrafts,
   deleteDraft,
