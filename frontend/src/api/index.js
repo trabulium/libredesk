@@ -387,6 +387,11 @@ const updateInbox = (id, data) =>
     }
   })
 const deleteInbox = (id) => http.delete(`/api/v1/inboxes/${id}`)
+const testInboxConnection = (data) =>
+  http.post("/api/v1/inboxes/test", data, {
+    headers: { "Content-Type": "application/json" },
+    timeout: 30000
+  })
 const saveDraft = (uuid, data) =>
   http.post(`/api/v1/conversations/${uuid}/draft`, data, {
     headers: {
@@ -600,6 +605,7 @@ export default {
   updateInbox,
   deleteInbox,
   toggleInbox,
+  testInboxConnection,
   createTeam,
   updateTeam,
   getSettings,
