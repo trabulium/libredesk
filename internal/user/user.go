@@ -74,6 +74,7 @@ type queries struct {
 	UpdateInactiveOffline  *sqlx.Stmt `query:"update-inactive-offline"`
 	UpdateLastLoginAt      *sqlx.Stmt `query:"update-last-login-at"`
 	SoftDeleteAgent        *sqlx.Stmt `query:"soft-delete-agent"`
+	SoftDeleteContact      *sqlx.Stmt `query:"soft-delete-contact"`
 	SetUserPassword        *sqlx.Stmt `query:"set-user-password"`
 	SetResetPasswordToken  *sqlx.Stmt `query:"set-reset-password-token"`
 	SetPassword            *sqlx.Stmt `query:"set-password"`

@@ -123,9 +123,12 @@
       :isFullscreen="isFullscreen"
       :handleFileUpload="handleFileUpload"
       :isSending="isSending"
+      :isGenerating="isGenerating"
       :enableSend="enableSend"
       :handleSend="handleSend"
+      :showGenerateButton="messageType === 'reply'"
       @emojiSelect="handleEmojiSelect"
+      @generateResponse="handleGenerateResponse"
     />
   </div>
 </template>
@@ -214,6 +217,10 @@ const props = defineProps({
     type: Boolean,
     required: true
   },
+  isGenerating: {
+    type: Boolean,
+    default: false
+  },
   uploadingFiles: {
     type: Array,
     required: true
@@ -236,7 +243,8 @@ const emit = defineEmits([
   'fileUpload',
   'inlineImageUpload',
   'fileDelete',
-  'aiPromptSelected'
+  'aiPromptSelected',
+  'generateResponse'
 ])
 
 const conversationStore = useConversationStore()
@@ -323,6 +331,10 @@ const handleEmojiSelect = (emoji) => {
 
 const handleAiPromptSelected = (key) => {
   emit('aiPromptSelected', key)
+}
+
+const handleGenerateResponse = () => {
+  emit('generateResponse')
 }
 
 // Watch and update macro view based on message type this filters our macros.

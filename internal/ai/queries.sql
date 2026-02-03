@@ -36,3 +36,6 @@ SET config = jsonb_build_object(
 ),
     updated_at = NOW()
 WHERE provider = 'openrouter';
+
+-- name: get-provider
+SELECT id, name, provider, config, is_default FROM ai_providers WHERE provider = $1;

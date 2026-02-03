@@ -52,6 +52,7 @@
           :aiPrompts="aiPrompts"
           :isSending="isSending"
           :isDraftLoading="isDraftLoading"
+          :isGenerating="isGenerating"
           :uploadingFiles="uploadingFiles"
           :uploadedFiles="mediaFiles"
           v-model:htmlContent="htmlContent"
@@ -68,6 +69,7 @@
           @fileUpload="handleFileUpload"
           @fileDelete="handleFileDelete"
           @aiPromptSelected="handleAiPromptSelected"
+          @generateResponse="handleGenerateResponse"
           class="h-full flex-grow"
         />
       </DialogContent>
@@ -85,6 +87,7 @@
         :aiPrompts="aiPrompts"
         :isSending="isSending"
         :isDraftLoading="isDraftLoading"
+        :isGenerating="isGenerating"
         :uploadingFiles="uploadingFiles"
         :uploadedFiles="mediaFiles"
         v-model:htmlContent="htmlContent"
@@ -101,6 +104,7 @@
         @fileUpload="handleFileUpload"
         @fileDelete="handleFileDelete"
         @aiPromptSelected="handleAiPromptSelected"
+        @generateResponse="handleGenerateResponse"
       />
     </div>
   </div>
@@ -181,6 +185,7 @@ const openAIKeyPrompt = ref(false)
 const isOpenAIKeyUpdating = ref(false)
 const isEditorFullscreen = ref(false)
 const isSending = ref(false)
+const isGenerating = ref(false)
 const messageType = useStorage('replyBoxMessageType', 'reply')
 const to = ref('')
 const cc = ref('')
@@ -230,12 +235,85 @@ const handleAiPromptSelected = async (key) => {
         description: 'Please configure an AI provider in Settings > AI Settings'
       })
       return
-      // Removed - now using toast instead
     }
     emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
       variant: 'destructive',
       description: handleHTTPError(error).message
     })
+  }
+}
+
+/**
+ * Handles generating a response using RAG.
+ * Gets the last message from the conversation and generates an AI response.
+ */
+const handleGenerateResponse = async () => {
+  isGenerating.value = true
+  try {
+    // Get all messages from the conversation
+    const messages = conversationStore.conversationMessages
+      .filter(m => !m.private && m.content)
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) // oldest first
+
+    if (!messages.length) {
+      emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
+        variant: "destructive",
+        description: "No messages found in conversation"
+      })
+      return
+    }
+
+    // Format conversation as a chain
+    const conversationText = messages.map(m => {
+      const tempDiv = document.createElement("div")
+      tempDiv.innerHTML = m.content || ""
+      const text = tempDiv.textContent || tempDiv.innerText || ""
+      const role = m.type === "incoming" ? "Customer" : "Agent"
+      return role + ": " + text.trim()
+    }).join("\n\n")
+
+    if (!conversationText.trim()) {
+      emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
+        variant: "destructive",
+        description: "Conversation content is empty"
+      })
+      return
+    }
+
+    // Call the RAG generate endpoint with full conversation
+    const resp = await api.ragGenerate({
+      conversation_id: conversationStore.current.id,
+      customer_message: conversationText
+    })
+
+    // Set the generated response in the editor
+    if (resp.data?.data?.response) {
+      // If response contains HTML tags, strip newlines (HTML provides structure)
+      // Otherwise convert newlines to <br> for plain text
+      const response = resp.data.data.response
+      if (/<[a-z][\s\S]*>/i.test(response)) {
+        htmlContent.value = response.replace(/\n+/g, '')
+      } else {
+        htmlContent.value = response.replace(/\n/g, '<br>')
+      }
+      emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
+        description: "Response generated from knowledge base"
+      })
+    }
+  } catch (error) {
+    if (error.response?.status === 400 && userStore.can("ai:manage")) {
+      emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
+        variant: "default",
+        description: "Please configure an AI provider and knowledge sources in Settings"
+      })
+      return
+    }
+    emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
+      variant: "destructive",
+      description: handleHTTPError(error).message
+    })
+  } finally {
+    isGenerating.value = false
   }
 }
 

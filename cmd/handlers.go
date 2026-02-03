@@ -36,6 +36,19 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.PUT("/api/v1/settings/general", perm(handleUpdateGeneralSettings, "general_settings:manage"))
 	g.GET("/api/v1/settings/notifications/email", perm(handleGetEmailNotificationSettings, "notification_settings:manage"))
 	g.PUT("/api/v1/settings/notifications/email", perm(handleUpdateEmailNotificationSettings, "notification_settings:manage"))
+	g.POST("/api/v1/settings/notifications/email/test", perm(handleTestEmailNotificationSettings, "notification_settings:manage"))
+	g.GET("/api/v1/settings/ai", perm(handleGetAISettings, "ai:manage"))
+	g.PUT("/api/v1/settings/ai", perm(handleUpdateAISettings, "ai:manage"))
+	// RAG knowledge sources
+	g.GET("/api/v1/rag/sources", perm(handleGetRAGSources, "ai:manage"))
+	g.GET("/api/v1/rag/sources/{id}", perm(handleGetRAGSource, "ai:manage"))
+	g.POST("/api/v1/rag/sources", perm(handleCreateRAGSource, "ai:manage"))
+	g.PUT("/api/v1/rag/sources/{id}", perm(handleUpdateRAGSource, "ai:manage"))
+	g.DELETE("/api/v1/rag/sources/{id}", perm(handleDeleteRAGSource, "ai:manage"))
+	g.POST("/api/v1/rag/sources/{id}/sync", perm(handleSyncRAGSource, "ai:manage"))
+	g.POST("/api/v1/rag/upload", perm(handleRAGFileUpload, "ai:manage"))
+	g.POST("/api/v1/rag/search", perm(handleRAGSearch, "ai:manage"))
+	g.POST("/api/v1/rag/generate", perm(handleRAGGenerateResponse, "conversations:write"))
 
 	// OpenID connect single sign-on.
 	g.GET("/api/v1/oidc", perm(handleGetAllOIDC, "oidc:manage"))
@@ -139,6 +152,7 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.GET("/api/v1/contacts/{id}", perm(handleGetContact, "contacts:read"))
 	g.PUT("/api/v1/contacts/{id}", perm(handleUpdateContact, "contacts:write"))
 	g.PUT("/api/v1/contacts/{id}/block", perm(handleBlockContact, "contacts:block"))
+	g.DELETE("/api/v1/contacts/{id}", perm(handleDeleteContact, "contacts:delete"))
 
 	// Contact notes.
 	g.GET("/api/v1/contacts/{id}/notes", perm(handleGetContactNotes, "contact_notes:read"))
