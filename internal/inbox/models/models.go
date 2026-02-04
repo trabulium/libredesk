@@ -37,6 +37,7 @@ type Config struct {
 	IMAP                 []IMAPConfig `json:"imap"`
 	From                 string       `json:"from"`
 	EnablePlusAddressing bool         `json:"enable_plus_addressing"` // Enable plus-addressing in Reply-To header for conversation matching
+	AutoAssignOnReply    bool         `json:"auto_assign_on_reply"`   // Auto-assign conversation to agent when they reply to unassigned ticket
 }
 
 // OAuthConfig holds OAuth 2.0 authentication details.
