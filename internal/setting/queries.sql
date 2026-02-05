@@ -1,17 +1,18 @@
 -- name: get-all
-SELECT JSON_OBJECT_AGG(key, value) AS settings FROM (SELECT * FROM settings ORDER BY key) t;
+SELECT COALESCE(JSON_OBJECT_AGG(key, value), '{}'::json) AS settings FROM (SELECT * FROM settings ORDER BY key) t;
 
 -- name: update
-UPDATE settings AS s
-SET value = c.value,
-    updated_at = now()
-FROM (SELECT * FROM jsonb_each($1)) AS c(key, value)
-WHERE s.key = c.key;
+INSERT INTO settings (key, value, updated_at)
+SELECT key, value, now()
+FROM jsonb_each($1)
+ON CONFLICT (key) DO UPDATE 
+SET value = EXCLUDED.value,
+    updated_at = now();
 
 -- name: get-by-prefix
-SELECT JSON_OBJECT_AGG(key, value) AS settings 
+SELECT COALESCE(JSON_OBJECT_AGG(key, value), '{}'::json) AS settings 
 FROM settings 
-WHERE key LIKE $1 || '%';
+WHERE key LIKE $1;
 
 -- name: get
 SELECT value FROM settings WHERE key = $1;
