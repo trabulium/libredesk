@@ -18,15 +18,21 @@
       </div>
 
       <!-- Full-width conversation list (no ticket selected) -->
-      <div v-if="!hasConversationOpen" class="flex-1 overflow-y-auto">
+      <div v-show="!hasConversationOpen" class="flex-1 overflow-y-auto">
         <ConversationList />
       </div>
 
       <!-- Full-width ticket detail (ticket selected) -->
-      <div v-else class="flex-1 overflow-hidden">
+      <!-- Always mounted via v-show so InboxView fetches data -->
+      <div v-show="hasConversationOpen" class="flex-1 overflow-hidden">
         <router-view v-slot="{ Component }">
           <component :is="Component" />
         </router-view>
+      </div>
+
+      <!-- Hidden: InboxView must always be mounted to fetch list data -->
+      <div v-show="false" v-if="!hasConversationOpen">
+        <router-view />
       </div>
     </template>
 
@@ -37,7 +43,6 @@
         class="flex-1"
         @layout="onLayoutChange"
       >
-        <!-- Conversation List Panel -->
         <ResizablePanel
           :default-size="panelSizes[0]"
           :min-size="25"
@@ -49,7 +54,6 @@
 
         <ResizableHandle />
 
-        <!-- Conversation Detail Panel -->
         <ResizablePanel :default-size="panelSizes[1]" :min-size="30">
           <router-view v-slot="{ Component }">
             <component :is="Component" />
@@ -80,7 +84,6 @@ const { hideListOnTicketOpen } = useTheme()
 const isSearchRoute = computed(() => route.name === 'search')
 const hasConversationOpen = computed(() => !!route.params.uuid)
 
-// Persist panel sizes for default theme
 const panelSizes = useStorage('inboxPanelSizes', [25, 75])
 
 const onLayoutChange = (sizes) => {
