@@ -37,7 +37,7 @@
     <!-- Freshdesk theme: unified scroll with collapsible reply -->
     <template v-if="isFreshdesk">
       <!-- Scrollable area: messages + expanded reply -->
-      <div class="flex-1 overflow-y-auto" ref="scrollContainer">
+      <div class="flex-1 overflow-y-auto freshdesk-unified-scroll" ref="scrollContainer">
         <MessageList />
         <!-- Expanded reply box flows inline with messages -->
         <div v-if="replyExpanded" class="border-t">
@@ -48,7 +48,7 @@
       <!-- Collapsed reply bar: fixed at bottom, outside scroll -->
       <div
         v-if="!replyExpanded"
-        class="flex-shrink-0 bg-background border-t px-4 py-2.5 flex gap-2"
+        class="flex-shrink-0 bg-background border-t px-4 py-2.5 mb-4 flex gap-2"
       >
         <Button size="sm" variant="outline" @click="expandReply">
           <Reply class="h-4 w-4 mr-1.5" />
@@ -103,9 +103,12 @@ const scrollContainer = ref(null)
 const expandReply = async () => {
   replyExpanded.value = true
   await nextTick()
-  // Scroll to bottom so the reply editor is visible
+  // Scroll to bottom so the full reply editor (including action icons) is visible
   if (scrollContainer.value) {
-    scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight
+    // Use setTimeout to allow ReplyBox to fully render before scrolling
+    setTimeout(() => {
+      scrollContainer.value.scrollTop = scrollContainer.value.scrollHeight
+    }, 100)
   }
 }
 
