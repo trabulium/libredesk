@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -60,21 +62,32 @@ func (a *authClient) refreshToken() (string, error) {
 	}
 	body, _ := json.Marshal(payload)
 
-	resp, err := http.Post(a.baseURL+"/api/auth/token", "application/json", bytes.NewBuffer(body))
+	tokenURL := a.baseURL + "/api/auth/token"
+	log.Printf("[ecommerce] Requesting token from: %s", tokenURL)
+	
+	resp, err := http.Post(tokenURL, "application/json", bytes.NewBuffer(body))
 	if err != nil {
-		return "", fmt.Errorf("token request failed: %w", err)
+		return "", fmt.Errorf("POST %s failed: %w", tokenURL, err)
 	}
 	defer resp.Body.Close()
 
+	respBody, _ := io.ReadAll(resp.Body)
+	
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("token request returned status %d", resp.StatusCode)
+		bodyStr := string(respBody)
+		if len(bodyStr) > 200 {
+			bodyStr = bodyStr[:200] + "..."
+		}
+		log.Printf("[ecommerce] Token request failed: status=%d body=%s", resp.StatusCode, bodyStr)
+		return "", fmt.Errorf("POST %s returned %d: %s", tokenURL, resp.StatusCode, bodyStr)
 	}
 
 	var tokenResp tokenResponse
-	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
-		return "", fmt.Errorf("failed to decode token: %w", err)
+	if err := json.Unmarshal(respBody, &tokenResp); err != nil {
+		return "", fmt.Errorf("failed to decode token response: %w", err)
 	}
 
+	log.Printf("[ecommerce] Token obtained successfully, expires in %d seconds", tokenResp.ExpiresIn)
 	a.token = tokenResp.Token
 	// Refresh 5 minutes before expiry
 	a.tokenExpiry = time.Now().Add(time.Duration(tokenResp.ExpiresIn-300) * time.Second)
