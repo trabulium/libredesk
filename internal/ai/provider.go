@@ -100,7 +100,7 @@ func FetchOpenRouterModels() ([]string, error) {
 	modelCacheMutex.RUnlock()
 
 	// Fetch fresh models
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 60 * time.Second}
 	resp, err := client.Get("https://openrouter.ai/api/v1/models")
 	if err != nil {
 		return getFallbackModels(), nil

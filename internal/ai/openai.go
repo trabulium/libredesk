@@ -22,7 +22,7 @@ func NewOpenAIClient(apiKey string, lo *logf.Logger) *OpenAIClient {
 	return &OpenAIClient{
 		apikey: apiKey,
 		lo:     lo,
-		client: &http.Client{Timeout: 10 * time.Second},
+		client: &http.Client{Timeout: 60 * time.Second},
 	}
 }
 

@@ -29,7 +29,7 @@ func NewOpenRouterClient(apiKey, model string, lo *logf.Logger) *OpenRouterClien
 		apiKey: apiKey,
 		model:  model,
 		lo:     lo,
-		client: &http.Client{Timeout: 30 * time.Second},
+		client: &http.Client{Timeout: 60 * time.Second},
 	}
 }
 
