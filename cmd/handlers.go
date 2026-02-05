@@ -50,9 +50,9 @@ func initHandlers(g *fastglue.Fastglue, hub *ws.Hub) {
 	g.POST("/api/v1/rag/search", perm(handleRAGSearch, "ai:manage"))
 	g.POST("/api/v1/rag/generate", perm(handleRAGGenerateResponse, "conversations:write"))
 	// Ecommerce integration
-	g.GET("/api/v1/settings/ecommerce", perm(handleGetEcommerceSettings, "settings:manage"))
-	g.PUT("/api/v1/settings/ecommerce", perm(handleUpdateEcommerceSettings, "settings:manage"))
-	g.POST("/api/v1/ecommerce/test", perm(handleTestEcommerceConnection, "settings:manage"))
+	g.GET("/api/v1/settings/ecommerce", perm(handleGetEcommerceSettings, "general_settings:manage"))
+	g.PUT("/api/v1/settings/ecommerce", perm(handleUpdateEcommerceSettings, "general_settings:manage"))
+	g.POST("/api/v1/ecommerce/test", perm(handleTestEcommerceConnection, "general_settings:manage"))
 	g.GET("/api/v1/ecommerce/status", auth(handleGetEcommerceStatus))
 
 	// OpenID connect single sign-on.
