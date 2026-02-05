@@ -111,6 +111,7 @@ onMounted(async () => {
     inboxData.oauth = inboxData?.config?.oauth || {}
     inboxData.enable_plus_addressing = inboxData?.config?.enable_plus_addressing || false
     inboxData.auto_assign_on_reply = inboxData?.config?.auto_assign_on_reply || false
+    inboxData.signature = inboxData?.config?.signature || ''
     inbox.value = inboxData
   } catch (error) {
     emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
