@@ -176,6 +176,11 @@ export const adminNavItems = [
         href: '/admin/webhooks',
         permission: 'webhooks:manage',
         isTitleKeyPlural: true
+      },
+      {
+        titleKey: 'Ecommerce',
+        href: '/admin/ecommerce',
+        permission: 'settings:manage'
       }
     ]
   }

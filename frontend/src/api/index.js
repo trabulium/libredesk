@@ -471,6 +471,19 @@ const ragFileUpload = (formData) => http.post("/api/v1/rag/upload", formData, { 
 const getAISettings = () => http.get("/api/v1/settings/ai")
 const updateAISettings = (data) => http.put("/api/v1/settings/ai", data)
 
+// Ecommerce Settings
+const getEcommerceSettings = () => http.get("/api/v1/settings/ecommerce")
+const updateEcommerceSettings = (data) => http.put("/api/v1/settings/ecommerce", data, {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+const testEcommerceConnection = (data) => http.post("/api/v1/ecommerce/test", data, {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
 const getContactNotes = (id) => http.get(`/api/v1/contacts/${id}/notes`)
 const createContactNote = (id, data) => http.post(`/api/v1/contacts/${id}/notes`, data, {
   headers: {
@@ -665,6 +678,9 @@ export default {
   ragFileUpload,
   getAISettings,
   updateAISettings,
+  getEcommerceSettings,
+  updateEcommerceSettings,
+  testEcommerceConnection,
   searchConversations,
   searchMessages,
   searchContacts,

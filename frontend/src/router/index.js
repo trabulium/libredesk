@@ -201,6 +201,12 @@ const routes = [
             meta: { title: 'Knowledge Sources' }
           },
           {
+            path: 'ecommerce',
+            name: 'ecommerce-settings',
+            component: () => import('@/views/admin/ecommerce/EcommerceSettings.vue'),
+            meta: { title: 'Ecommerce' }
+          },
+          {
             path: 'business-hours',
             component: () => import('@/views/admin/business-hours/BusinessHours.vue'),
             meta: { title: 'Business Hours' },
