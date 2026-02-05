@@ -8,6 +8,7 @@ export const createFormSchema = (t) => z.object({
   enabled: z.boolean().optional(),
   csat_enabled: z.boolean().optional(),
   enable_plus_addressing: z.boolean().optional(),
+  auto_assign_on_reply: z.boolean().optional(),
   auth_type: z.enum([AUTH_TYPE_PASSWORD, AUTH_TYPE_OAUTH2]),
   oauth: z.object({
     access_token: z.string().optional(),
