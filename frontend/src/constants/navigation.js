@@ -180,7 +180,7 @@ export const adminNavItems = [
       {
         titleKey: 'Ecommerce',
         href: '/admin/ecommerce',
-        permission: 'settings:manage'
+        permission: 'general_settings:manage'
       }
     ]
   }
