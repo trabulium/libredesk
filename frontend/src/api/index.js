@@ -378,6 +378,7 @@ const createInbox = (data) =>
     }
   })
 const getInboxes = () => http.get('/api/v1/inboxes')
+const getInboxSignature = (inboxId, conversationUuid) => http.get(`/api/v1/inboxes/${inboxId}/signature?conversation_uuid=${conversationUuid || ''}`)
 const getInbox = (id) => http.get(`/api/v1/inboxes/${id}`)
 const toggleInbox = (id) => http.put(`/api/v1/inboxes/${id}/toggle`)
 const updateInbox = (id, data) =>
@@ -555,6 +556,7 @@ export default {
   getUsers,
   getInbox,
   getInboxes,
+  getInboxSignature,
   getLanguage,
   getConversation,
   getAutomationRule,

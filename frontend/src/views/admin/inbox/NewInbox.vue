@@ -160,6 +160,7 @@ const submitForm = (values) => {
     config: {
       enable_plus_addressing: values.enable_plus_addressing,
       auto_assign_on_reply: values.auto_assign_on_reply,
+      signature: values.signature,
       imap: [values.imap],
       smtp: [values.smtp]
     }

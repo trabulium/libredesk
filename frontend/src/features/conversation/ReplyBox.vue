@@ -230,9 +230,40 @@ const fetchEcommerceStatus = async () => {
 }
 
 // Fetch data on mount
+// Signature for current inbox
+const inboxSignature = ref('')
+
+// Fetch signature when conversation changes
+const fetchInboxSignature = async () => {
+  const conv = conversationStore.current
+  if (!conv?.inbox_id) return
+  
+  try {
+    const resp = await api.getInboxSignature(conv.inbox_id, conv.uuid)
+    inboxSignature.value = resp.data?.data?.signature || ''
+  } catch (err) {
+    inboxSignature.value = ''
+  }
+}
+
+// Insert signature if editor is empty when starting a new reply
+const insertSignatureIfEmpty = () => {
+  if (!htmlContent.value && inboxSignature.value) {
+    htmlContent.value = '<p><br></p><p><br></p>' + inboxSignature.value
+  }
+}
+
 onMounted(() => {
   fetchAiPrompts()
   fetchEcommerceStatus()
+  fetchInboxSignature()
+})
+
+// Re-fetch signature when conversation changes
+watch(() => conversationStore.current?.uuid, () => {
+  fetchInboxSignature()
+  // Insert signature for new replies (when editor is empty)
+  setTimeout(insertSignatureIfEmpty, 100)
 })
 
 /**

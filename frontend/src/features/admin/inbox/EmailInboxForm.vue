@@ -86,8 +86,46 @@
         </FormControl>
       </FormItem>
     </FormField>
+    <FormField v-if="showFormFields" v-slot="{ componentField }" name="signature">
+      <FormItem class="box p-4">
+        <div class="space-y-2">
+          <FormLabel class="text-base">Email Signature</FormLabel>
+          <FormDescription>
+            HTML signature appended to outgoing emails. Use placeholders for dynamic content.
+          </FormDescription>
+          <div class="flex flex-wrap gap-1 mb-2">
+            <Button type="button" variant="outline" size="xs" @click="insertPlaceholder('{{agent.first_name}}')">
+              Agent First Name
+            </Button>
+            <Button type="button" variant="outline" size="xs" @click="insertPlaceholder('{{agent.last_name}}')">
+              Agent Last Name
+            </Button>
+            <Button type="button" variant="outline" size="xs" @click="insertPlaceholder('{{agent.full_name}}')">
+              Agent Full Name
+            </Button>
+            <Button type="button" variant="outline" size="xs" @click="insertPlaceholder('{{inbox.name}}')">
+              Inbox Name
+            </Button>
+            <Button type="button" variant="outline" size="xs" @click="insertPlaceholder('{{customer.first_name}}')">
+              Customer First Name
+            </Button>
+          </div>
+          <FormControl>
+            <Textarea
+              ref="signatureTextarea"
+              v-model="componentField.modelValue"
+              @update:modelValue="componentField['onUpdate:modelValue']"
+              placeholder="Best regards,
+{{agent.full_name}}
+{{inbox.name}} Support Team"
+              class="min-h-[120px] font-mono text-sm"
+            />
+          </FormControl>
+        </div>
+      </FormItem>
+    </FormField>
 
-    <FormField v-if="setupMethod" v-slot="{ componentField }" name="auth_type">
+<FormField v-if="setupMethod" v-slot="{ componentField }" name="auth_type">
       <FormItem>
         <FormControl>
           <Input
@@ -728,6 +766,7 @@ import {
   FormDescription
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import {
@@ -793,7 +832,14 @@ const setupMethod = ref(null)
 // OAuth modal state
 const showOAuthModal = ref(false)
 const selectedProvider = ref('')
-const flowType = ref('new_inbox') // "new_inbox" or "reconnect"
+const flowType = ref('new_inbox')
+const signatureTextarea = ref(null)
+
+// Insert placeholder into signature field
+const insertPlaceholder = (placeholder) => {
+  const currentValue = form.values.signature || ''
+  form.setFieldValue('signature', currentValue + placeholder)
+} // "new_inbox" or "reconnect"
 const oauthCredentials = ref({
   client_id: '',
   client_secret: '',
@@ -833,6 +879,7 @@ const form = useForm({
     csat_enabled: false,
     enable_plus_addressing: true,
     auto_assign_on_reply: false,
+    signature: '',
     auth_type: AUTH_TYPE_PASSWORD,
     imap: {
       host: 'imap.gmail.com',
