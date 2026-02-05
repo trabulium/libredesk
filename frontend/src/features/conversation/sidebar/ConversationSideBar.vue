@@ -130,7 +130,7 @@ const teamsStore = useTeamStore()
 const tagStore = useTagStore()
 const tags = ref([])
 // Save the accordion state in local storage
-const accordionState = useStorage('conversation-sidebar-accordion', [])
+const accordionState = useStorage('conversation-sidebar-accordion', ['previous_conversations'])
 const { t } = useI18n()
 let isConversationChange = false
 customAttributeStore.fetchCustomAttributes()
