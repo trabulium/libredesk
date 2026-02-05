@@ -28,7 +28,7 @@ const testStatus = ref(null) // 'success', 'error', or null
 
 const providerName = computed(() => {
   switch (providerType.value) {
-    case 'magento1': return 'Magento 1 / Maho Commerce'
+    case 'magento1': return 'Maho Commerce'
     case 'magento2': return 'Magento 2'
     case 'shopify': return 'Shopify'
     default: return 'Ecommerce'
@@ -146,7 +146,7 @@ function clearSettings() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Disabled</SelectItem>
-                  <SelectItem value="magento1">Magento 1 / Maho Commerce</SelectItem>
+                  <SelectItem value="magento1">Maho Commerce (Magento 1 fork)</SelectItem>
                   <SelectItem value="magento2">Magento 2</SelectItem>
                   <SelectItem value="shopify">Shopify</SelectItem>
                 </SelectContent>
@@ -169,7 +169,7 @@ function clearSettings() {
                     Your Shopify store URL (e.g., https://your-store.myshopify.com)
                   </template>
                   <template v-else-if="providerType === 'magento1'">
-                    Your Magento 1 / Maho Commerce store URL with API endpoint (e.g., https://store.com/api/rest)
+                    Your store's base URL without /api (e.g., https://dev.tenniswarehouse.com.au)
                   </template>
                   <template v-else>
                     Your Magento 2 store URL (e.g., https://store.com)
@@ -180,20 +180,20 @@ function clearSettings() {
               <div class="space-y-2">
                 <Label for="client-id">
                   <template v-if="providerType === 'shopify'">API Key</template>
-                  <template v-else-if="providerType === 'magento1'">Consumer Key</template>
+                  <template v-else-if="providerType === 'magento1'">Client ID</template>
                   <template v-else>Integration Access Token</template>
                 </Label>
                 <Input
                   id="client-id"
                   v-model="clientID"
-                  :placeholder="hasConfig ? '********' : 'Enter API key/token'"
+                  :placeholder="hasConfig ? '(configured)' : providerType === 'magento1' ? 'maho_xxxxxxxx' : 'Enter API key/token'"
                 />
                 <p class="text-xs text-muted-foreground">
                   <template v-if="providerType === 'shopify'">
                     Your Shopify Admin API access token
                   </template>
                   <template v-else-if="providerType === 'magento1'">
-                    OAuth Consumer Key from System > Web Services > REST OAuth Consumers
+                    OAuth2 Client ID from Maho Admin > System > API > OAuth Clients
                   </template>
                   <template v-else>
                     Integration Access Token from System > Extensions > Integrations
@@ -204,7 +204,7 @@ function clearSettings() {
               <div class="space-y-2">
                 <Label for="client-secret">
                   <template v-if="providerType === 'shopify'">Admin API Secret Key</template>
-                  <template v-else-if="providerType === 'magento1'">Consumer Secret</template>
+                  <template v-else-if="providerType === 'magento1'">Client Secret</template>
                   <template v-else>Integration Secret</template>
                 </Label>
                 <Input
@@ -218,7 +218,7 @@ function clearSettings() {
                     Your Shopify Admin API secret key (stored encrypted)
                   </template>
                   <template v-else-if="providerType === 'magento1'">
-                    OAuth Consumer Secret (stored encrypted)
+                    OAuth2 Client Secret (stored encrypted)
                   </template>
                   <template v-else>
                     Integration secret token (stored encrypted)
@@ -266,10 +266,17 @@ function clearSettings() {
       </p>
       <h4 class="font-medium mb-2">Supported Platforms</h4>
       <ul class="text-sm text-muted-foreground list-disc list-inside space-y-1">
-        <li><strong>Magento 1 / Maho Commerce</strong> - REST API with OAuth 1.0</li>
+        <li><strong>Maho Commerce</strong> - New API Platform with OAuth2 client_credentials</li>
         <li><strong>Magento 2</strong> - REST API with Integration tokens</li>
         <li><strong>Shopify</strong> - Admin API with access tokens</li>
       </ul>
+      <h4 class="font-medium mt-4 mb-2">Maho Commerce Setup</h4>
+      <ol class="text-sm text-muted-foreground list-decimal list-inside space-y-1">
+        <li>Go to Admin > System > API > OAuth Clients</li>
+        <li>Create a new OAuth2 client</li>
+        <li>Copy the Client ID and Client Secret</li>
+        <li>Enter your store URL (without /api)</li>
+      </ol>
     </template>
   </AdminPageWithHelp>
 </template>
