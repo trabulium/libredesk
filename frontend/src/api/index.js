@@ -467,7 +467,7 @@ const updateRAGSource = (id, data) => http.put(`/api/v1/rag/sources/${id}`, data
 const deleteRAGSource = (id) => http.delete(`/api/v1/rag/sources/${id}`)
 const syncRAGSource = (id) => http.post(`/api/v1/rag/sources/${id}/sync`)
 const ragSearch = (data) => http.post("/api/v1/rag/search", data)
-const ragGenerate = (data) => http.post("/api/v1/rag/generate", data)
+const ragGenerate = (data) => http.post("/api/v1/rag/generate", data, { timeout: 60000 })
 const ragFileUpload = (formData) => http.post("/api/v1/rag/upload", formData, { headers: { "Content-Type": "multipart/form-data" } })
 const getAISettings = () => http.get("/api/v1/settings/ai")
 const updateAISettings = (data) => http.put("/api/v1/settings/ai", data)
@@ -485,6 +485,8 @@ const testEcommerceConnection = (data) => http.post("/api/v1/ecommerce/test", da
     'Content-Type': 'application/json'
   }
 })
+const testEcommerceCustomer = (email) => http.get(`/api/v1/ecommerce/test/customer?email=${encodeURIComponent(email)}`, { timeout: 30000 })
+const testEcommerceOrder = (orderNumber) => http.get(`/api/v1/ecommerce/test/order?order_number=${encodeURIComponent(orderNumber)}`, { timeout: 30000 })
 
 const getContactNotes = (id) => http.get(`/api/v1/contacts/${id}/notes`)
 const createContactNote = (id, data) => http.post(`/api/v1/contacts/${id}/notes`, data, {

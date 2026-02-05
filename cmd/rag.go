@@ -227,6 +227,15 @@ func handleRAGGenerateResponse(r *fastglue.Request) error {
 		return r.SendErrorEnvelope(fasthttp.StatusBadRequest, "Customer message is required", nil, envelope.InputError)
 	}
 
+	// Cap conversation context to avoid huge prompts and AI timeouts.
+	const maxMessageLen = 6000
+	if len(req.CustomerMessage) > maxMessageLen {
+		req.CustomerMessage = "[Earlier messages truncated]\n\n" + req.CustomerMessage[len(req.CustomerMessage)-maxMessageLen:]
+		app.lo.Info("truncated customer message", "original_len", len(req.CustomerMessage)+maxMessageLen, "truncated_to", len(req.CustomerMessage))
+	}
+
+	timerStart := time.Now()
+
 	// Get AI settings
 	aiSettings, err := app.setting.GetAISettings()
 	if err != nil {
@@ -249,6 +258,8 @@ func handleRAGGenerateResponse(r *fastglue.Request) error {
 		app.lo.Warn("RAG search failed, continuing without context", "error", err)
 		results = []models.SearchResult{}
 	}
+
+	app.lo.Info("TIMING rag_search", "elapsed_ms", time.Since(timerStart).Milliseconds())
 
 	app.lo.Info("RAG generate response", "query", req.CustomerMessage, "results_count", len(results), "threshold", threshold, "include_ecommerce", req.IncludeEcommerce)
 
@@ -275,6 +286,8 @@ func handleRAGGenerateResponse(r *fastglue.Request) error {
 		ecommerceContext = app.gatherEcommerceContext(r.RequestCtx, req.ConversationID)
 	}
 
+	app.lo.Info("TIMING ecommerce", "elapsed_ms", time.Since(timerStart).Milliseconds())
+
 	// Search external search API if enabled.
 	var externalSearchContext string
 	if aiSettings.ExternalSearchEnabled && aiSettings.ExternalSearchURL != "" {
@@ -294,6 +307,8 @@ func handleRAGGenerateResponse(r *fastglue.Request) error {
 			}
 		}
 	}
+
+	app.lo.Info("TIMING external_search", "elapsed_ms", time.Since(timerStart).Milliseconds())
 
 	// Build context from results
 	var contextParts, macroParts []string
@@ -343,9 +358,14 @@ Provide a helpful, accurate response based on the context above. If the context 
 		Images:       aiImages,
 	}
 
+	app.lo.Info("TIMING before_ai_completion", "elapsed_ms", time.Since(timerStart).Milliseconds(), "prompt_len", len(systemPrompt))
+
 	// Generate response using the prompt payload with optional images
 	response, err := app.ai.CompletionWithPayload(payload)
+	app.lo.Info("TIMING ai_completion_done", "elapsed_ms", time.Since(timerStart).Milliseconds())
+
 	if err != nil {
+		app.lo.Error("TIMING ai_completion_failed", "elapsed_ms", time.Since(timerStart).Milliseconds(), "error", err)
 		return sendErrorEnvelope(r, err)
 	}
 
@@ -399,6 +419,8 @@ func (app *App) gatherEcommerceContext(ctx context.Context, conversationID int) 
 			}
 		}
 	}
+
+	app.lo.Info("ecommerce message scan", "db_messages", len(messages), "text_messages", len(messageTexts))
 
 	// Gather ecommerce context using the manager
 	eCtx, err := app.ecommerce.GatherFullContext(ctx, customerEmail, messageTexts, 5)
@@ -637,7 +659,11 @@ func stripHTML(s string) string {
 		if end == -1 {
 			break
 		}
-		s = s[:start] + s[start+end+1:]
+		s = s[:start] + " " + s[start+end+1:]
+	}
+	// Collapse multiple spaces
+	for strings.Contains(s, "  ") {
+		s = strings.ReplaceAll(s, "  ", " ")
 	}
 	return strings.TrimSpace(s)
 }

@@ -308,6 +308,7 @@ const handleGenerateResponse = async (includeEcommerce = false) => {
     const messages = conversationStore.conversationMessages
       .filter(m => !m.private && m.content)
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) // oldest first
+      .slice(-10) // limit to last 10 messages to avoid huge prompts
 
     if (!messages.length) {
       emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
