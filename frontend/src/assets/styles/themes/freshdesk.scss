@@ -117,3 +117,12 @@
     }
   }
 }
+
+// ─── Reply box: remove nested scrollbar ─────────────────
+// In Freshdesk theme the reply flows inside the main scroll,
+// so the 600px max-height on ReplyBoxContent creates an ugly
+// double scrollbar. Remove it.
+.theme-freshdesk .max-h-\[600px\] {
+  max-height: none !important;
+  overflow: visible !important;
+}
