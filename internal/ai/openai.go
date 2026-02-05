@@ -33,12 +33,42 @@ func (o *OpenAIClient) SendPrompt(payload PromptPayload) (string, error) {
 	}
 
 	apiURL := "https://api.openai.com/v1/chat/completions"
+
+	// Build messages array
+	messages := []interface{}{
+		map[string]string{"role": "system", "content": payload.SystemPrompt},
+	}
+
+	// Build user message - multimodal if images present, text-only otherwise
+	if len(payload.Images) > 0 {
+		// Multimodal request with images
+		content := []map[string]interface{}{
+			{"type": "text", "text": payload.UserPrompt},
+		}
+		for _, img := range payload.Images {
+			content = append(content, map[string]interface{}{
+				"type": "image_url",
+				"image_url": map[string]string{
+					"url":    img.URL,
+					"detail": "low", // Use low detail to save tokens
+				},
+			})
+		}
+		messages = append(messages, map[string]interface{}{
+			"role":    "user",
+			"content": content,
+		})
+	} else {
+		// Text-only request
+		messages = append(messages, map[string]string{
+			"role":    "user",
+			"content": payload.UserPrompt,
+		})
+	}
+
 	requestBody := map[string]interface{}{
-		"model": "gpt-4o-mini",
-		"messages": []map[string]string{
-			{"role": "system", "content": payload.SystemPrompt},
-			{"role": "user", "content": payload.UserPrompt},
-		},
+		"model":       "gpt-4o-mini",
+		"messages":    messages,
 		"max_tokens":  1024,
 		"temperature": 0.7,
 	}

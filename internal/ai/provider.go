@@ -25,8 +25,15 @@ const (
 
 // PromptPayload represents the structured input for an LLM provider.
 type PromptPayload struct {
-	SystemPrompt string `json:"system_prompt"`
-	UserPrompt   string `json:"user_prompt"`
+	SystemPrompt string         `json:"system_prompt"`
+	UserPrompt   string         `json:"user_prompt"`
+	Images       []ImageContent `json:"images,omitempty"` // For multimodal requests
+}
+
+// ImageContent represents an image for multimodal AI requests.
+type ImageContent struct {
+	URL      string `json:"url"`      // base64 data URL or HTTP URL
+	Filename string `json:"filename"` // Optional filename for reference
 }
 
 // ProviderInfo contains information about an AI provider for the frontend.
