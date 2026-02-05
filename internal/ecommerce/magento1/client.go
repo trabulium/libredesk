@@ -36,7 +36,7 @@ func (c *Client) Name() string { return "magento1" }
 // doRequest makes an authenticated request to the Magento API
 func (c *Client) doRequest(ctx context.Context, endpoint string, params url.Values) (*http.Response, error) {
 	token, err := c.auth.getToken()
-	if err \!= nil {
+	if err != nil {
 		return nil, err
 	}
 
@@ -46,7 +46,7 @@ func (c *Client) doRequest(ctx context.Context, endpoint string, params url.Valu
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
-	if err \!= nil {
+	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
@@ -58,17 +58,17 @@ func (c *Client) doRequest(ctx context.Context, endpoint string, params url.Valu
 // GetCustomerByEmail looks up a customer by email address
 func (c *Client) GetCustomerByEmail(ctx context.Context, email string) (*ecommerce.Customer, error) {
 	resp, err := c.doRequest(ctx, "/api/v2/customers", url.Values{"email": {email}})
-	if err \!= nil {
+	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode \!= http.StatusOK {
+	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API returned %d", resp.StatusCode)
 	}
 
 	var customers []magentoCustomer
-	if err := json.NewDecoder(resp.Body).Decode(&customers); err \!= nil {
+	if err := json.NewDecoder(resp.Body).Decode(&customers); err != nil {
 		return nil, err
 	}
 	if len(customers) == 0 {
@@ -81,17 +81,17 @@ func (c *Client) GetCustomerByEmail(ctx context.Context, email string) (*ecommer
 func (c *Client) GetOrdersByEmail(ctx context.Context, email string, limit int) ([]ecommerce.Order, error) {
 	params := url.Values{"email": {email}, "pageSize": {fmt.Sprintf("%d", limit)}}
 	resp, err := c.doRequest(ctx, "/api/v2/orders", params)
-	if err \!= nil {
+	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode \!= http.StatusOK {
+	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API returned %d", resp.StatusCode)
 	}
 
 	var orders []magentoOrder
-	if err := json.NewDecoder(resp.Body).Decode(&orders); err \!= nil {
+	if err := json.NewDecoder(resp.Body).Decode(&orders); err != nil {
 		return nil, err
 	}
 
@@ -105,17 +105,17 @@ func (c *Client) GetOrdersByEmail(ctx context.Context, email string, limit int) 
 // GetOrderByNumber looks up an order by its display number (increment_id)
 func (c *Client) GetOrderByNumber(ctx context.Context, orderNumber string) (*ecommerce.Order, error) {
 	resp, err := c.doRequest(ctx, "/api/v2/orders", url.Values{"incrementId": {orderNumber}})
-	if err \!= nil {
+	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode \!= http.StatusOK {
+	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API returned %d", resp.StatusCode)
 	}
 
 	var orders []magentoOrder
-	if err := json.NewDecoder(resp.Body).Decode(&orders); err \!= nil {
+	if err := json.NewDecoder(resp.Body).Decode(&orders); err != nil {
 		return nil, err
 	}
 	if len(orders) == 0 {
@@ -128,7 +128,7 @@ func (c *Client) GetOrderByNumber(ctx context.Context, orderNumber string) (*eco
 // GetOrderByID looks up an order by internal ID
 func (c *Client) GetOrderByID(ctx context.Context, orderID string) (*ecommerce.Order, error) {
 	resp, err := c.doRequest(ctx, "/api/v2/orders/"+orderID, nil)
-	if err \!= nil {
+	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -136,12 +136,12 @@ func (c *Client) GetOrderByID(ctx context.Context, orderID string) (*ecommerce.O
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, ecommerce.ErrNotFound
 	}
-	if resp.StatusCode \!= http.StatusOK {
+	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API returned %d", resp.StatusCode)
 	}
 
 	var order magentoOrder
-	if err := json.NewDecoder(resp.Body).Decode(&order); err \!= nil {
+	if err := json.NewDecoder(resp.Body).Decode(&order); err != nil {
 		return nil, err
 	}
 	result := order.toEcommerce()
@@ -243,7 +243,7 @@ func (m *magentoOrder) toEcommerce() ecommerce.Order {
 		Currency:       "AUD",
 		CreatedAt:      created,
 	}
-	if m.ShippingAddress \!= nil {
+	if m.ShippingAddress != nil {
 		order.ShippingAddress = &ecommerce.Address{
 			FirstName: m.ShippingAddress.Firstname,
 			LastName:  m.ShippingAddress.Lastname,
@@ -255,7 +255,7 @@ func (m *magentoOrder) toEcommerce() ecommerce.Order {
 			Telephone: m.ShippingAddress.Telephone,
 		}
 	}
-	if m.BillingAddress \!= nil {
+	if m.BillingAddress != nil {
 		order.BillingAddress = &ecommerce.Address{
 			FirstName: m.BillingAddress.Firstname,
 			LastName:  m.BillingAddress.Lastname,

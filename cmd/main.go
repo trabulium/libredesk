@@ -17,6 +17,7 @@ import (
 	activitylog "github.com/abhinavxd/libredesk/internal/activity_log"
 	"github.com/abhinavxd/libredesk/internal/ai"
 	"github.com/abhinavxd/libredesk/internal/rag"
+	"github.com/abhinavxd/libredesk/internal/ecommerce"
 	ragsync "github.com/abhinavxd/libredesk/internal/rag/sync"
 	auth_ "github.com/abhinavxd/libredesk/internal/auth"
 	"github.com/abhinavxd/libredesk/internal/authz"
@@ -100,6 +101,7 @@ type App struct {
 	ai               *ai.Manager
 	rag              *rag.Manager
 	ragSync          *ragsync.Coordinator
+	ecommerce        *ecommerce.Manager
 	search           *search.Manager
 	activityLog      *activitylog.Manager
 	notifier         *notifier.Service
@@ -286,6 +288,10 @@ func main() {
 		webhook:          webhook,
 	}
 	app.consts.Store(constants)
+	// Initialize ecommerce manager from stored settings
+	if err := initEcommerceManager(app); err != nil {
+		lo.Warn("failed to initialize ecommerce manager", "error", err)
+	}
 
 	g := fastglue.NewGlue()
 	g.SetContext(app)
