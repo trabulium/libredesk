@@ -35,44 +35,46 @@
     </div>
 
     <!-- Freshdesk theme: unified scroll with collapsible reply -->
-    <div v-if="isFreshdesk" class="flex flex-col flex-grow overflow-hidden">
+    <template v-if="isFreshdesk">
+      <!-- Scrollable area: messages + expanded reply -->
       <div class="flex-1 overflow-y-auto" ref="scrollContainer">
         <MessageList />
-
-        <!-- Collapsed reply bar -->
-        <div
-          v-if="!replyExpanded"
-          class="sticky bottom-0 bg-background border-t px-4 py-2 flex gap-2"
-        >
-          <Button size="sm" variant="outline" @click="expandReply('reply')">
-            <Reply class="h-4 w-4 mr-1.5" />
-            Reply
-          </Button>
-          <Button size="sm" variant="outline" @click="expandReply('private_note')">
-            <StickyNote class="h-4 w-4 mr-1.5" />
-            Private note
-          </Button>
-        </div>
-
-        <!-- Expanded reply box (inside scroll flow) -->
+        <!-- Expanded reply box flows inline with messages -->
         <div v-if="replyExpanded" class="border-t">
-          <ReplyBox ref="replyBoxRef" :initialMessageType="initialMessageType" />
+          <ReplyBox />
         </div>
       </div>
-    </div>
+
+      <!-- Collapsed reply bar: fixed at bottom, outside scroll -->
+      <div
+        v-if="!replyExpanded"
+        class="flex-shrink-0 bg-background border-t px-4 py-2.5 flex gap-2"
+      >
+        <Button size="sm" variant="outline" @click="expandReply">
+          <Reply class="h-4 w-4 mr-1.5" />
+          Reply
+        </Button>
+        <Button size="sm" variant="outline" @click="expandReply">
+          <StickyNote class="h-4 w-4 mr-1.5" />
+          Private note
+        </Button>
+      </div>
+    </template>
 
     <!-- Default theme: original layout with sticky reply -->
-    <div v-else class="flex flex-col flex-grow overflow-hidden">
-      <MessageList class="flex-1 overflow-y-auto" />
-      <div class="sticky bottom-0">
-        <ReplyBox />
+    <template v-else>
+      <div class="flex flex-col flex-grow overflow-hidden">
+        <MessageList class="flex-1 overflow-y-auto" />
+        <div class="sticky bottom-0">
+          <ReplyBox />
+        </div>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useConversationStore } from '@/stores/conversation'
 import { useTheme } from '@/composables/useTheme'
 import {
@@ -96,12 +98,9 @@ const { currentTheme } = useTheme()
 
 const isFreshdesk = computed(() => currentTheme.value === 'freshdesk')
 const replyExpanded = ref(false)
-const initialMessageType = ref('reply')
 const scrollContainer = ref(null)
-const replyBoxRef = ref(null)
 
-const expandReply = async (type) => {
-  initialMessageType.value = type
+const expandReply = async () => {
   replyExpanded.value = true
   await nextTick()
   // Scroll to bottom so the reply editor is visible
