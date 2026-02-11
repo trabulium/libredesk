@@ -5,10 +5,18 @@
         :to="conversationRoute"
         class="group relative block px-4 p-4 transition-all duration-200 ease-in-out cursor-pointer hover:bg-accent/20 dark:hover:bg-accent/60"
         :class="{
-          'bg-accent/60': conversation.uuid === currentConversation?.uuid
+          'bg-accent/60': conversation.uuid === currentConversation?.uuid,
+          'bg-primary/5': isItemSelected && conversation.uuid !== currentConversation?.uuid
         }"
       >
-        <div class="flex items-start gap-4">
+        <div class="flex items-start gap-3">
+          <!-- Checkbox -->
+          <div class="flex items-center pt-3" @click.prevent.stop="handleCheckboxClick">
+            <Checkbox
+              :checked="isItemSelected"
+            />
+          </div>
+
           <!-- Avatar -->
           <Avatar class="w-12 h-12 rounded-full shadow">
             <AvatarImage
@@ -150,6 +158,7 @@ import {
   ContextMenuTrigger
 } from '@/components/ui/context-menu'
 import SlaBadge from '@/features/sla/SlaBadge.vue'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useConversationStore } from '@/stores/conversation'
 
 let timer = null
@@ -249,4 +258,12 @@ const relativeLastMessageTime = computed(() => {
 const hasDraftForConversation = computed(() => {
   return conversationStore.hasDraft(props.conversation.uuid)
 })
+
+const isItemSelected = computed(() => {
+  return conversationStore.isSelected(props.conversation.uuid)
+})
+
+const handleCheckboxClick = (event) => {
+  conversationStore.toggleSelect(props.conversation.uuid, event.shiftKey)
+}
 </script>

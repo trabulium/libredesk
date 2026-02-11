@@ -19,6 +19,9 @@ export const useConversationStore = defineStore('conversation', () => {
   const macros = ref({})
   const drafts = ref(new Map())
 
+  // Bulk selection state
+  const selectedUUIDs = ref(new Set())
+
   // Options for select fields
   const priorityOptions = computed(() => {
     return priorities.value.map(p => ({ label: p.name, value: p.id }))
@@ -33,6 +36,52 @@ export const useConversationStore = defineStore('conversation', () => {
       value: s.id
     }))
   )
+
+  // Bulk selection methods
+  let lastClickedUUID = null
+
+  const selectedCount = computed(() => selectedUUIDs.value.size)
+  const allSelected = computed(() => {
+    const list = conversationsList.value
+    return list.length > 0 && selectedUUIDs.value.size === list.length
+  })
+
+  function toggleSelect (uuid, shiftKey = false) {
+    const next = new Set(selectedUUIDs.value)
+
+    if (shiftKey && lastClickedUUID && lastClickedUUID !== uuid) {
+      // Shift-click: select range between lastClicked and current
+      const list = conversationsList.value
+      const lastIdx = list.findIndex(c => c.uuid === lastClickedUUID)
+      const curIdx = list.findIndex(c => c.uuid === uuid)
+      if (lastIdx !== -1 && curIdx !== -1) {
+        const start = Math.min(lastIdx, curIdx)
+        const end = Math.max(lastIdx, curIdx)
+        for (let i = start; i <= end; i++) {
+          next.add(list[i].uuid)
+        }
+      }
+    } else {
+      if (next.has(uuid)) next.delete(uuid)
+      else next.add(uuid)
+    }
+
+    lastClickedUUID = uuid
+    selectedUUIDs.value = next
+  }
+
+  function selectAll () {
+    selectedUUIDs.value = new Set(conversationsList.value.map(c => c.uuid))
+  }
+
+  function clearSelection () {
+    selectedUUIDs.value = new Set()
+    lastClickedUUID = null
+  }
+
+  function isSelected (uuid) {
+    return selectedUUIDs.value.has(uuid)
+  }
 
   // TODO: Move to constants.
   const sortFieldMap = {
@@ -685,6 +734,7 @@ export const useConversationStore = defineStore('conversation', () => {
     conversations.data = []
     conversations.page = 1
     seenConversationUUIDs = new Map()
+    clearSelection()
   }
 
 
@@ -814,6 +864,13 @@ export const useConversationStore = defineStore('conversation', () => {
     getDraft,
     setDraft,
     removeDraft,
-    hasDraft
+    hasDraft,
+    selectedUUIDs,
+    selectedCount,
+    allSelected,
+    toggleSelect,
+    selectAll,
+    clearSelection,
+    isSelected
   }
 })

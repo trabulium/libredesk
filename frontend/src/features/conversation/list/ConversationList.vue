@@ -6,8 +6,101 @@
       <span class="text-xl font-semibold">{{ title }}</span>
     </div>
 
-    <!-- Filters -->
-    <div class="p-2 flex justify-between items-center">
+    <!-- Bulk Action Toolbar (when items selected) -->
+    <div v-if="hasSelection" class="p-2 flex items-center gap-1 border-b bg-muted/30">
+      <!-- Select All checkbox -->
+      <Checkbox
+        :checked="conversationStore.allSelected"
+        @update:checked="toggleSelectAll"
+        class="ml-1 mr-1"
+      />
+      <span class="text-xs font-medium whitespace-nowrap mr-1">
+        {{ conversationStore.selectedCount }} selected
+      </span>
+
+      <!-- Assign dropdown -->
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" class="h-7 text-xs" :disabled="bulkLoading">
+            Assign
+            <ChevronDown class="w-3 h-3 ml-1 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent class="max-h-60 overflow-y-auto">
+          <DropdownMenuLabel class="text-xs text-muted-foreground">Agents</DropdownMenuLabel>
+          <DropdownMenuItem
+            v-for="agent in usersStore.options"
+            :key="'agent-' + agent.value"
+            @click="bulkAssignAgent(agent.value)"
+          >
+            {{ agent.label }}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel class="text-xs text-muted-foreground">Teams</DropdownMenuLabel>
+          <DropdownMenuItem
+            v-for="team in teamsStore.options"
+            :key="'team-' + team.value"
+            @click="bulkAssignTeam(team.value)"
+          >
+            {{ team.label }}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <!-- Status dropdown -->
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" class="h-7 text-xs" :disabled="bulkLoading">
+            Status
+            <ChevronDown class="w-3 h-3 ml-1 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            v-for="status in conversationStore.statusOptionsNoSnooze"
+            :key="status.value"
+            @click="bulkUpdateStatus(status.label)"
+          >
+            {{ status.label }}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <!-- Priority dropdown -->
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" class="h-7 text-xs" :disabled="bulkLoading">
+            Priority
+            <ChevronDown class="w-3 h-3 ml-1 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            v-for="priority in conversationStore.priorityOptions"
+            :key="priority.value"
+            @click="bulkUpdatePriority(priority.label)"
+          >
+            {{ priority.label }}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <!-- Clear selection -->
+      <Button
+        variant="ghost"
+        size="sm"
+        class="h-7 text-xs ml-auto"
+        @click="conversationStore.clearSelection()"
+      >
+        <X class="w-3 h-3" />
+      </Button>
+
+      <!-- Loading indicator -->
+      <Loader2 v-if="bulkLoading" class="w-4 h-4 animate-spin text-muted-foreground" />
+    </div>
+
+    <!-- Filters (hidden when bulk selecting) -->
+    <div v-else class="p-2 flex justify-between items-center">
       <!-- Status dropdown-menu, hidden when a view is selected as views are pre-filtered -->
       <DropdownMenu v-if="!route.params.viewID">
         <DropdownMenuTrigger asChild>
@@ -149,14 +242,19 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useConversationStore } from '@/stores/conversation'
-import { MessageCircleQuestion, MessageCircleWarning, ChevronDown, Loader2 } from 'lucide-vue-next'
+import { useUsersStore } from '@/stores/users'
+import { useTeamStore } from '@/stores/team'
+import { MessageCircleQuestion, MessageCircleWarning, ChevronDown, Loader2, X } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -164,11 +262,24 @@ import EmptyList from '@/features/conversation/list/ConversationEmptyList.vue'
 import ConversationListItem from '@/features/conversation/list/ConversationListItem.vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useEmitter } from '@/composables/useEmitter'
+import { EMITTER_EVENTS } from '@/constants/emitterEvents'
+import { handleHTTPError } from '@/utils/http'
+import api from '@/api'
 import ConversationListItemSkeleton from '@/features/conversation/list/ConversationListItemSkeleton.vue'
 
 const conversationStore = useConversationStore()
+const usersStore = useUsersStore()
+const teamsStore = useTeamStore()
 const route = useRoute()
 const { t } = useI18n()
+const emitter = useEmitter()
+const bulkLoading = ref(false)
+
+onMounted(() => {
+  usersStore.fetchUsers()
+  teamsStore.fetchTeams()
+})
 
 const title = computed(() => {
   const typeValue = route.meta?.type?.(route)
@@ -177,6 +288,16 @@ const title = computed(() => {
     (typeValue || route.meta?.title || '').slice(1)
   )
 })
+
+const hasSelection = computed(() => conversationStore.selectedCount > 0)
+
+const toggleSelectAll = () => {
+  if (conversationStore.allSelected) {
+    conversationStore.clearSelection()
+  } else {
+    conversationStore.selectAll()
+  }
+}
 
 const handleStatusChange = (status) => {
   conversationStore.setListStatus(status.label)
@@ -188,6 +309,52 @@ const handleSortChange = (order) => {
 
 const loadNextPage = () => {
   conversationStore.fetchNextConversations()
+}
+
+// Bulk action helpers
+async function runBulkAction (actionFn) {
+  const uuids = [...conversationStore.selectedUUIDs]
+  bulkLoading.value = true
+  let successCount = 0
+  let errorCount = 0
+  for (const uuid of uuids) {
+    try {
+      await actionFn(uuid)
+      successCount++
+    } catch (error) {
+      errorCount++
+    }
+  }
+  bulkLoading.value = false
+  conversationStore.clearSelection()
+  conversationStore.fetchFirstPageConversations()
+
+  if (errorCount > 0) {
+    emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
+      variant: 'destructive',
+      description: `Updated ${successCount}, failed ${errorCount} of ${uuids.length} conversations`
+    })
+  } else {
+    emitter.emit(EMITTER_EVENTS.SHOW_TOAST, {
+      description: `Updated ${successCount} conversations`
+    })
+  }
+}
+
+const bulkAssignAgent = (agentId) => {
+  runBulkAction((uuid) => api.updateAssignee(uuid, 'user', { assignee_id: parseInt(agentId) }))
+}
+
+const bulkAssignTeam = (teamId) => {
+  runBulkAction((uuid) => api.updateAssignee(uuid, 'team', { assignee_id: parseInt(teamId) }))
+}
+
+const bulkUpdateStatus = (status) => {
+  runBulkAction((uuid) => api.updateConversationStatus(uuid, { status }))
+}
+
+const bulkUpdatePriority = (priority) => {
+  runBulkAction((uuid) => api.updateConversationPriority(uuid, { priority }))
 }
 
 const hasConversations = computed(() => conversationStore.conversationsList.length !== 0)
