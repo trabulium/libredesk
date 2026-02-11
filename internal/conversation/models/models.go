@@ -91,6 +91,8 @@ type ConversationListItem struct {
 	NextResponseDueAt     null.Time               `db:"next_response_deadline_at" json:"next_response_deadline_at"`
 	NextResponseMetAt     null.Time               `db:"next_response_met_at" json:"next_response_met_at"`
 	MentionedMessageUUID  null.String             `db:"mentioned_message_uuid" json:"mentioned_message_uuid"`
+	AssignedUserName      null.String             `db:"assigned_user_name" json:"assigned_user_name"`
+	AssignedTeamName      null.String             `db:"assigned_team_name" json:"assigned_team_name"`
 }
 
 // ConversationListContact represents contact info in conversation list views

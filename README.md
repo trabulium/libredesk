@@ -1,161 +1,168 @@
-<a href="https://zerodha.tech"><img src="https://zerodha.tech/static/images/github-badge.svg" align="right" alt="Zerodha Tech Badge" /></a>
+# Libredesk (mageaustralia Fork)
 
+This is a maintained fork of [Libredesk](https://github.com/abhinavxd/libredesk), an open-source, self-hosted customer support desk.
 
-# Libredesk
+We run Libredesk in production and love the project. This fork exists because we need to ship features at the pace our business demands, and the upstream PR review cycle doesn't always align with that timeline. Rather than pressure the maintainers, we maintain our own fork with the features we need.
 
-Modern, open source, self-hosted customer support desk. Single binary app. 
+We're not trying to replace or compete with upstream Libredesk — we actively track releases and rebase our changes onto new versions as they come out. If any of our additions are useful to the broader project, we're happy to contribute them back.
 
-![image](https://libredesk.io/hero.png)
-
-
-Visit [libredesk.io](https://libredesk.io) for more info. Check out the [**Live demo**](https://demo.libredesk.io/).
-
-## Features
-
-- **Multi Shared Inbox**  
-  Libredesk supports multiple shared inboxes, letting you manage conversations across teams effortlessly.
-- **Granular Permissions**  
-  Create custom roles with granular permissions for teams and individual agents.
-- **Smart Automation**  
-  Eliminate repetitive tasks with powerful automation rules. Auto-tag, assign, and route conversations based on custom conditions.
-- **CSAT Surveys**  
-  Measure customer satisfaction with automated surveys.
-- **Macros**  
-  Save frequently sent messages as templates. With one click, send saved responses, set tags, and more.
-- **Smart Organization**  
-  Keep conversations organized with tags, custom statuses for conversations, and snoozing. Find any conversation instantly from the search bar.
-- **Auto Assignment**  
-  Distribute workload with auto assignment rules. Auto-assign conversations based on agent capacity or custom criteria.
-- **SLA Management**  
-  Set and track response time targets. Get notified when conversations are at risk of breaching SLA commitments.
-- **Custom attributes**  
-  Create custom attributes for contacts or conversations such as the subscription plan or the date of their first purchase. 
-- **AI-Assist**
-  Instantly rewrite responses with AI to make them more friendly, professional, or polished.
-- **AI-Powered Responses (RAG)**
-  Generate context-aware responses using your knowledge base. Indexes FAQ pages and macros for intelligent retrieval.
-- **Activity logs**  
-  Track all actions performed by agents and admins—updates and key events across the system—for auditing and accountability.
-- **Webhooks**  
-  Integrate with external systems using real-time HTTP notifications for conversation and message events.
-- **Command Bar**  
-  Opens with a simple shortcut (CTRL+K) and lets you quickly perform actions on conversations.
-
-And more checkout - [libredesk.io](https://libredesk.io)
+**Upstream**: [abhinavxd/libredesk](https://github.com/abhinavxd/libredesk) | [libredesk.io](https://libredesk.io) | [Live demo](https://demo.libredesk.io/)  
+**Base version**: v1.0.1
 
 ---
 
-## Fork Enhancements
+## Fork Features
 
-This fork ([Trabulium/libredesk](https://github.com/Trabulium/libredesk)) extends upstream Libredesk with the following additions:
+Everything from upstream Libredesk is included. The following are additions in this fork.
+
+**Latest** — Bulk Actions with conversation selection, and inline agent/team assignment directly from the conversation list.
+
+### Bulk Actions & Conversation Selection
+
+Select multiple conversations from the list and perform bulk operations — no more opening each ticket individually to triage.
+
+- **Per-row checkboxes** on the conversation list
+- **Shift+click** range selection (click one, hold shift, click another to select all in between)
+- **Select All** toggle in the bulk action toolbar
+- **Bulk Assign** to any agent or team via dropdown
+- **Bulk Status** change (Open, Replied, Resolved, Closed)
+- **Bulk Priority** change (Urgent, High, Medium, Low, None)
+- Toast notifications with success/error counts
+
+### Quick-Assign Dropdowns on Conversation List
+
+Each conversation row shows the assigned agent and team with inline dropdown menus for reassignment — no need to open the conversation.
+
+- Agent assignment shown with user icon (orange "Unassigned" when empty)
+- Team assignment shown with team icon
+- Compact 2x2 grid layout alongside timestamp and unread badge
+- Dropdown menus with full agent/team lists for quick reassignment
 
 ### OpenRouter AI Provider
 
 Support for [OpenRouter](https://openrouter.ai/) as an AI provider, giving access to 100+ models (GPT-4o, Claude, Llama, Mistral, etc.) through a single API key.
 
-- **Settings**: Admin → AI Settings → Add OpenRouter provider
-- **Files**: `internal/ai/openrouter.go`, `internal/ai/provider.go`, `internal/ai/ai.go`, `frontend/src/views/admin/ai/AISettings.vue`
-
-### Ecommerce Integration (Maho Commerce)
-
-Pull customer and order data from a Maho Commerce (Magento-compatible) store into AI-generated responses. When an agent clicks "Generate Response", the system automatically:
-
-- Looks up the customer by email address
-- Fetches their recent orders with item details, prices, and quantities
-- Scans conversation messages for order numbers and fetches those specifically
-- Includes order status history and shipment tracking with carrier-specific tracking URLs
-- Supported carriers: Australia Post, Couriers Please, Team Global Express
-
-**Settings**: Admin → Ecommerce Settings (store URL, OAuth2 credentials)
-
-**Files**:
-- `internal/ecommerce/` — Manager, models, and provider interface
-- `internal/ecommerce/magento1/` — Maho Commerce API client (OAuth2, Hydra/JSON-LD collections)
-- `cmd/ecommerce.go` — API handlers
-- `frontend/src/views/admin/ecommerce/EcommerceSettings.vue` — Settings UI
-
 ### RAG AI Assistant Enhancements
 
 Improvements to the built-in RAG AI assistant:
 
-- **Knowledge Sources UI**: Admin page to manage knowledge sources (webpages, macros) at Admin → Knowledge Sources
-- **Context limiting**: Conversations are trimmed to the last 10 messages (frontend) and 6000 characters (backend) to prevent timeouts on long email threads
-- **Ecommerce context injection**: Order and customer data from the ecommerce integration is included in the AI prompt alongside knowledge base results
-- **Extended timeouts**: AI provider HTTP timeouts increased to 60 seconds to handle large prompts; frontend request timeout set to 60 seconds
+- **Knowledge Sources UI**: Admin page to manage knowledge sources (webpages, macros)
+- **Context limiting**: Conversations trimmed to last 10 messages / 6000 chars to prevent timeouts on long threads
+- **Ecommerce context injection**: Order and customer data included in AI prompts alongside knowledge base results
+- **Extended timeouts**: AI provider HTTP timeouts increased to 60s for large prompts
 
-**Files**: `cmd/rag.go`, `internal/rag/`, `frontend/src/features/conversation/ReplyBox.vue`
+### Ecommerce Integration (Maho Commerce)
 
-### UI Customisations
+Pull customer and order data from a Maho Commerce (Magento-compatible) store into AI-generated responses:
 
-- **Ticket ID in header**: Conversation header shows contact name, ticket reference number, and subject (e.g., "Matthew Campbell #105 - Order enquiry")
-- **Simplified sidebar name**: Sidebar shows only the contact name without ticket details to avoid text overflow
-- **Self-assign notification suppression**: Assigning a conversation to yourself no longer triggers a notification
+- Customer lookup by email
+- Recent order fetching with items, prices, quantities
+- Conversation scanning for order numbers with automatic detail retrieval
+- Order status history and shipment tracking with carrier-specific URLs
+- Supported carriers: Australia Post, Couriers Please, Team Global Express
 
-**Files**: `frontend/src/stores/conversation.js`, `frontend/src/features/conversation/sidebar/ConversationSideBarContact.vue`, `internal/conversation/conversation.go`
+### Freshdesk Theme
 
-### Per-Inbox Signatures
+An alternative UI theme inspired by Freshdesk, selectable via a theme switcher in the sidebar.
 
-Each inbox can have its own email signature configured in the inbox settings, appended to outgoing emails.
+- Teal colour palette with dark sidebar
+- Conversation list hides when a ticket is open (full-width detail view)
+- Sidebar collapsed by default
+- Collapsible reply box with unified scrolling
+- Theme persists via localStorage
 
-**Files**: `frontend/src/views/admin/inbox/EditInbox.vue`
+### Conversation List Enhancements
+
+- **Subject, ticket number, status, and priority** displayed on each row
+- **Previous Conversations accordion** defaults to open
+- **Conversation status and priority badges** with colour-coded indicators
+
+### Email & Message Improvements
+
+- **Inline image rendering** in conversation messages
+- **Email HTML sanitisation** for incoming messages — cleaner rendering with tightened layout
+- **Per-email remove buttons** on TO, CC, and BCC fields
+- **Agent name in email From header** instead of generic inbox name
+
+### Full-Width Layout Toggle
+
+Toggle between split list/detail view and full-width conversation view. Messages render at full width for better readability on wide screens.
+
+### Auto-Assign on Reply
+
+Per-inbox setting that automatically assigns a conversation to the agent who replies, if it's currently unassigned.
+
+### Per-Inbox Email Signatures
+
+Each inbox can have its own email signature with dynamic placeholders, configured in inbox settings.
+
+### Connection Testing
+
+- **IMAP connection test** with debug logs in inbox settings
+- **SMTP test** for email notification settings
+
+### Multimodal AI (Image Support)
+
+Conversation attachments (images) are extracted, resized to 500x500, and included as base64 in AI prompts for multimodal models that support vision.
+
+### Other UI Customisations
+
+- **Ticket ID in header**: Shows contact name, reference number, and subject (e.g., "John Smith #105 - Order enquiry")
+- **Simplified sidebar name**: Contact name only in sidebar to avoid overflow
+- **Self-assign notification suppression**: Assigning to yourself doesn't trigger a notification
 
 ---
 
 ## Installation
 
-### Docker
+This fork is designed for self-hosting with local Docker builds. It is **not** published to Docker Hub.
 
-The latest image is available on DockerHub at [`libredesk/libredesk:latest`](https://hub.docker.com/r/libredesk/libredesk/tags?page=1&ordering=last_updated&name=latest)
+### Docker (Recommended)
 
 ```shell
-# Download the compose file and sample config file in the current directory.
-curl -LO https://github.com/abhinavxd/libredesk/raw/main/docker-compose.yml
-curl -LO https://github.com/abhinavxd/libredesk/raw/main/config.sample.toml
+git clone https://github.com/mageaustralia/libredesk/.git
+cd libredesk
 
-# Copy the config.sample.toml to config.toml and edit it as needed.
 cp config.sample.toml config.toml
+# Edit config.toml as needed
 
-# Run the services in the background.
 docker compose up -d
 
-# Setting System user password.
+# Set the System user password
 docker exec -it libredesk_app ./libredesk --set-system-user-password
 ```
 
-Go to `http://localhost:9000` and login with username `System` and the password you set using the `--set-system-user-password` command.
-
-See [installation docs](https://docs.libredesk.io/getting-started/installation)
-
-__________________
-
-### Binary
-- Download the [latest release](https://github.com/abhinavxd/libredesk/releases) and extract the libredesk binary.
-- Copy config.sample.toml to config.toml and edit as needed.
-- `./libredesk --install` to setup the Postgres DB (or `--upgrade` to upgrade an existing DB. Upgrades are idempotent and running them multiple times have no side effects).
-- Run `./libredesk --set-system-user-password` to set the password for the System user.
-- Run `./libredesk` and visit `http://localhost:9000` and login with username `System` and the password you set using the --set-system-user-password command.
-
-See [installation docs](https://docs.libredesk.io/getting-started/installation)
-__________________
+Go to `http://localhost:9000` and login with username `System` and the password you set.
 
 ### AI-Powered Responses (RAG)
 
 The AI assistant uses PostgreSQL with pgvector for semantic search.
 
-**Docker:** Already included - uses `pgvector/pgvector:pg17` image.
+**Docker:** Already included — uses `pgvector/pgvector:pg17` image.
 
-**Binary/Manual Install:** Install the pgvector extension:
+**Manual install:** Install the pgvector extension:
 - Ubuntu/Debian: `apt install postgresql-17-pgvector`
 - Or compile from [pgvector/pgvector](https://github.com/pgvector/pgvector)
 
 The extension is automatically enabled during database migration.
 
-__________________
+---
 
+## Keeping Up with Upstream
 
-## Developers
-If you are interested in contributing, refer to the [developer setup](https://docs.libredesk.io/contributing/developer-setup). The backend is written in Go and the frontend is Vue js 3 with Shadcn for UI components.
+When a new upstream version is released:
 
+```shell
+git fetch origin --tags
+git checkout -b feature/openrouter-vX.Y.Z vX.Y.Z
+git cherry-pick <your-custom-commits>
+# Resolve any conflicts, rebuild, deploy
+```
 
-## Translators
-You can help translate Libredesk into your language on [Crowdin](https://crowdin.com/project/libredesk).
+---
+
+## Contributing
+
+For contributions to the core project, see [upstream Libredesk](https://github.com/abhinavxd/libredesk). For issues specific to this fork's features, open an issue on [mageaustralia/libredesk](https://github.com/mageaustralia/libredesk/).
+
+The backend is written in Go and the frontend is Vue.js 3 with Shadcn for UI components. See [developer setup docs](https://docs.libredesk.io/contributing/developer-setup).

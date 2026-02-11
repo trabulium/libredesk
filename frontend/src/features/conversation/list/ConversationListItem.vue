@@ -18,7 +18,7 @@
           </div>
 
           <!-- Avatar -->
-          <Avatar class="w-12 h-12 rounded-full shadow">
+          <Avatar class="w-12 h-12 rounded-full shadow shrink-0">
             <AvatarImage
               :src="conversation.contact.avatar_url || ''"
               class="object-cover"
@@ -29,7 +29,7 @@
             </AvatarFallback>
           </Avatar>
 
-          <!-- Content container -->
+          <!-- Content (left) -->
           <div class="flex-1 min-w-0 space-y-1.5">
             <!-- Subject + Reference Number row -->
             <div class="flex items-center gap-1.5 min-w-0" v-if="conversation.subject || conversation.reference_number">
@@ -42,35 +42,27 @@
               </h3>
             </div>
 
-            <!-- Contact name and last message time -->
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-1.5 min-w-0">
-                <span class="text-xs text-muted-foreground truncate">
-                  {{ contactFullName }}
-                </span>
-                <Pencil
-                  v-if="hasDraftForConversation"
-                  class="w-3 h-3 text-muted-foreground flex-shrink-0"
-                />
-                <!-- Status badge -->
-                <span
-                  v-if="conversation.status"
-                  class="conversation-status-badge text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap"
-                  :class="statusClass"
-                >{{ conversation.status }}</span>
-                <!-- Priority badge -->
-                <span
-                  v-if="conversation.priority && conversation.priority !== 'None'"
-                  class="text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap"
-                  :class="priorityClass"
-                >{{ conversation.priority }}</span>
-              </div>
-              <span
-                class="text-xs text-gray-400 whitespace-nowrap"
-                v-if="conversation.last_message_at"
-              >
-                {{ relativeLastMessageTime }}
+            <!-- Contact name + badges -->
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="text-xs text-muted-foreground truncate">
+                {{ contactFullName }}
               </span>
+              <Pencil
+                v-if="hasDraftForConversation"
+                class="w-3 h-3 text-muted-foreground flex-shrink-0"
+              />
+              <!-- Status badge -->
+              <span
+                v-if="conversation.status"
+                class="conversation-status-badge text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                :class="statusClass"
+              >{{ conversation.status }}</span>
+              <!-- Priority badge -->
+              <span
+                v-if="conversation.priority && conversation.priority !== 'None'"
+                class="text-[10px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                :class="priorityClass"
+              >{{ conversation.priority }}</span>
             </div>
 
             <!-- Inbox name -->
@@ -79,24 +71,16 @@
               <span>{{ conversation.inbox_name }}</span>
             </p>
 
-            <!-- Message preview and unread count -->
-            <div class="flex items-start justify-between gap-2">
-              <div
-                class="text-sm flex items-center gap-1.5 flex-1 break-all text-gray-600 dark:text-gray-300"
-              >
-                <Reply
-                  class="text-green-600 flex-shrink-0"
-                  size="15"
-                  v-if="conversation.last_message_sender === 'agent'"
-                />
-                {{ trimmedLastMessage }}
-              </div>
-              <div
-                v-if="conversation.unread_message_count > 0"
-                class="flex items-center justify-center w-6 h-6 bg-green-600 text-white text-xs font-medium rounded-full"
-              >
-                {{ conversation.unread_message_count }}
-              </div>
+            <!-- Message preview -->
+            <div
+              class="text-sm flex items-center gap-1.5 break-all text-gray-600 dark:text-gray-300"
+            >
+              <Reply
+                class="text-green-600 flex-shrink-0"
+                size="15"
+                v-if="conversation.last_message_sender === 'agent'"
+              />
+              {{ trimmedLastMessage }}
             </div>
 
             <!-- SLA Badges -->
@@ -133,6 +117,86 @@
               </div>
             </div>
           </div>
+
+          <!-- Right column: 2x2 grid — assignments left, time+unread right -->
+          <div class="shrink-0 grid grid-cols-[auto_auto] gap-x-3 gap-y-1.5 items-center pt-1" @click.prevent.stop>
+            <!-- Row 1: Agent | Time -->
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  class="text-xs flex items-center gap-1 py-1 px-1 justify-end hover:text-foreground transition-colors cursor-pointer"
+                  :class="conversation.assigned_user_name ? 'text-muted-foreground' : 'text-orange-500 dark:text-orange-400'"
+                >
+                  <User class="w-3 h-3" />
+                  {{ conversation.assigned_user_name || 'Unassigned' }}
+                  <ChevronDown class="w-2.5 h-2.5 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" class="max-h-60 overflow-y-auto">
+                <DropdownMenuItem
+                  v-if="conversation.assigned_user_name"
+                  @click="unassignAgent"
+                  class="text-xs text-muted-foreground"
+                >
+                  None
+                </DropdownMenuItem>
+                <DropdownMenuSeparator v-if="conversation.assigned_user_name" />
+                <DropdownMenuItem
+                  v-for="agent in usersStore.options"
+                  :key="'agent-' + agent.value"
+                  @click="assignAgent(agent)"
+                  class="text-xs"
+                >
+                  {{ agent.label }}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <span
+              class="text-xs text-gray-400 whitespace-nowrap text-right"
+            >
+              {{ conversation.last_message_at ? relativeLastMessageTime : '' }}
+            </span>
+
+            <!-- Row 2: Team | Unread -->
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  class="text-xs flex items-center gap-1 py-1 px-1 justify-end hover:text-foreground transition-colors cursor-pointer"
+                  :class="conversation.assigned_team_name ? 'text-muted-foreground' : 'text-muted-foreground/50'"
+                >
+                  <Users class="w-3 h-3" />
+                  {{ conversation.assigned_team_name || 'No team' }}
+                  <ChevronDown class="w-2.5 h-2.5 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" class="max-h-60 overflow-y-auto">
+                <DropdownMenuItem
+                  v-if="conversation.assigned_team_name"
+                  @click="unassignTeam"
+                  class="text-xs text-muted-foreground"
+                >
+                  None
+                </DropdownMenuItem>
+                <DropdownMenuSeparator v-if="conversation.assigned_team_name" />
+                <DropdownMenuItem
+                  v-for="team in teamsStore.options"
+                  :key="'team-' + team.value"
+                  @click="assignTeam(team)"
+                  class="text-xs"
+                >
+                  {{ team.label }}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <div class="flex justify-end">
+              <div
+                v-if="conversation.unread_message_count > 0"
+                class="flex items-center justify-center w-6 h-6 bg-green-600 text-white text-xs font-medium rounded-full"
+              >
+                {{ conversation.unread_message_count }}
+              </div>
+            </div>
+          </div>
         </div>
       </router-link>
     </ContextMenuTrigger>
@@ -149,7 +213,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getRelativeTime } from '@/utils/datetime'
-import { Mail, Reply, Pencil, MailOpen } from 'lucide-vue-next'
+import { Mail, Reply, Pencil, MailOpen, User, Users, ChevronDown } from 'lucide-vue-next'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   ContextMenu,
@@ -157,14 +221,27 @@ import {
   ContextMenuItem,
   ContextMenuTrigger
 } from '@/components/ui/context-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import SlaBadge from '@/features/sla/SlaBadge.vue'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useConversationStore } from '@/stores/conversation'
+import { useUsersStore } from '@/stores/users'
+import { useTeamStore } from '@/stores/team'
+import { handleHTTPError } from '@/utils/http'
+import api from '@/api'
 
 let timer = null
 const now = ref(new Date())
 const route = useRoute()
 const conversationStore = useConversationStore()
+const usersStore = useUsersStore()
+const teamsStore = useTeamStore()
 const frdStatus = ref('')
 const rdStatus = ref('')
 const nrdStatus = ref('')
@@ -265,5 +342,41 @@ const isItemSelected = computed(() => {
 
 const handleCheckboxClick = (event) => {
   conversationStore.toggleSelect(props.conversation.uuid, event.shiftKey)
+}
+
+const assignAgent = async (agent) => {
+  try {
+    await api.updateAssignee(props.conversation.uuid, 'user', { assignee_id: parseInt(agent.value) })
+    props.conversation.assigned_user_name = agent.label
+  } catch (error) {
+    handleHTTPError(error)
+  }
+}
+
+const unassignAgent = async () => {
+  try {
+    await api.removeAssignee(props.conversation.uuid, 'user')
+    props.conversation.assigned_user_name = null
+  } catch (error) {
+    handleHTTPError(error)
+  }
+}
+
+const assignTeam = async (team) => {
+  try {
+    await api.updateAssignee(props.conversation.uuid, 'team', { assignee_id: parseInt(team.value) })
+    props.conversation.assigned_team_name = team.label
+  } catch (error) {
+    handleHTTPError(error)
+  }
+}
+
+const unassignTeam = async () => {
+  try {
+    await api.removeAssignee(props.conversation.uuid, 'team')
+    props.conversation.assigned_team_name = null
+  } catch (error) {
+    handleHTTPError(error)
+  }
 }
 </script>
