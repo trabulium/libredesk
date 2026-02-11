@@ -266,6 +266,7 @@ import { useMacroStore } from '@/stores/macro'
 import SelectComboBox from '@/components/combobox/SelectCombobox.vue'
 import { UserTypeAgent } from '@/constants/user'
 import api from '@/api'
+import { useUserStore } from '@/stores/user'
 
 const dialogOpen = defineModel({
   required: false,
@@ -276,6 +277,7 @@ const inboxStore = useInboxStore()
 const { t } = useI18n()
 const uStore = useUsersStore()
 const teamStore = useTeamStore()
+const userStore = useUserStore()
 const emitter = useEmitter()
 const loading = ref(false)
 const searchResults = ref([])
@@ -408,15 +410,39 @@ watch(
   }
 )
 
-// Auto-select first inbox when options become available
+// Auto-select inbox: prefer agent's team default inbox, fallback to first
 watch(
   () => inboxStore.options,
-  (options) => {
+  async (options) => {
     if (options.length > 0 && !form.values.inbox_id) {
-      const firstValue = options[0].value
-      form.setFieldValue("inbox_id", firstValue)
-      // Directly fetch signature since the inbox_id watcher may not have fired yet
-      fetchAndInsertSignature(Number(firstValue))
+      let selectedInbox = options[0].value
+
+      // Try to find agent's team default inbox and auto-set team
+      const agentTeams = userStore.teams
+      if (agentTeams.length > 0) {
+        await teamStore.fetchTeams()
+        for (const agentTeam of agentTeams) {
+          const team = teamStore.teams.find(t => t.id === agentTeam.id)
+          if (team?.default_inbox_id) {
+            const matchingOption = options.find(o => Number(o.value) === team.default_inbox_id)
+            if (matchingOption) {
+              selectedInbox = matchingOption.value
+              if (!form.values.team_id) {
+                form.setFieldValue("team_id", String(team.id))
+              }
+              break
+            }
+          }
+        }
+      }
+
+      form.setFieldValue("inbox_id", selectedInbox)
+      fetchAndInsertSignature(Number(selectedInbox))
+    }
+
+    // Auto-assign current agent
+    if (!form.values.agent_id && userStore.userID) {
+      form.setFieldValue("agent_id", String(userStore.userID))
     }
   },
   { immediate: true }

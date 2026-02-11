@@ -228,9 +228,76 @@ const emit = defineEmits(['send', 'aiPromptSelected', 'mentionsChanged'])
 const emitPrompt = (key) => emit('aiPromptSelected', key)
 
 /**
+ * Resize an image file if it exceeds max dimensions.
+ * Returns a new File with the resized image, or the original if small enough.
+ */
+const MAX_IMAGE_WIDTH = 800
+const MAX_IMAGE_HEIGHT = 800
+
+const resizeImage = (file) => {
+  return new Promise((resolve) => {
+    // Only resize actual image types
+    if (!file.type.startsWith('image/') || file.type === 'image/gif') {
+      resolve(file)
+      return
+    }
+
+    const img = new window.Image()
+    const url = URL.createObjectURL(file)
+
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+
+      // No resize needed if within limits
+      if (img.width <= MAX_IMAGE_WIDTH && img.height <= MAX_IMAGE_HEIGHT) {
+        resolve(file)
+        return
+      }
+
+      // Calculate new dimensions preserving aspect ratio
+      let newWidth = img.width
+      let newHeight = img.height
+
+      if (newWidth > MAX_IMAGE_WIDTH) {
+        newHeight = Math.round(newHeight * (MAX_IMAGE_WIDTH / newWidth))
+        newWidth = MAX_IMAGE_WIDTH
+      }
+      if (newHeight > MAX_IMAGE_HEIGHT) {
+        newWidth = Math.round(newWidth * (MAX_IMAGE_HEIGHT / newHeight))
+        newHeight = MAX_IMAGE_HEIGHT
+      }
+
+      const canvas = document.createElement('canvas')
+      canvas.width = newWidth
+      canvas.height = newHeight
+
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, newWidth, newHeight)
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const resized = new File([blob], file.name, { type: file.type })
+          resolve(resized)
+        } else {
+          resolve(file)
+        }
+      }, file.type, 0.85)
+    }
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      resolve(file)
+    }
+
+    img.src = url
+  })
+}
+
+/**
  * Upload an image file to the server and return the URL
  */
 const uploadImage = async (file) => {
+  file = await resizeImage(file)
   isUploadingImage.value = true
   try {
     const response = await api.uploadMedia({
@@ -381,25 +448,121 @@ const CustomMention = Mention.extend({
   }
 })
 
-// Custom Image extension with resizing support
+// Custom Image extension with drag-handle resizing
 const ResizableImage = Image.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
       width: {
         default: null,
-        parseHTML: element => element.getAttribute('width'),
+        parseHTML: element => element.getAttribute('width') || element.style.width?.replace('px', '') || null,
         renderHTML: attributes => {
           if (!attributes.width) return {}
-          return { width: attributes.width }
+          return { width: attributes.width, style: `width: ${attributes.width}px` }
         }
       },
       height: {
         default: null,
-        parseHTML: element => element.getAttribute('height'),
+        parseHTML: element => element.getAttribute('height') || null,
         renderHTML: attributes => {
           if (!attributes.height) return {}
           return { height: attributes.height }
+        }
+      }
+    }
+  },
+  addNodeView() {
+    return ({ node, getPos, editor: nodeEditor }) => {
+      // Wrapper
+      const wrapper = document.createElement('div')
+      wrapper.classList.add('image-resizer')
+      wrapper.style.display = 'inline-block'
+      wrapper.style.position = 'relative'
+      wrapper.style.lineHeight = '0'
+
+      // Image
+      const img = document.createElement('img')
+      img.src = node.attrs.src
+      img.alt = node.attrs.alt || ''
+      img.title = node.attrs.title || ''
+      img.classList.add('inline-image')
+      img.style.maxWidth = '100%'
+      img.style.height = 'auto'
+      if (node.attrs.width) {
+        img.style.width = node.attrs.width + 'px'
+      }
+      wrapper.appendChild(img)
+
+      // Resize handle (bottom-right corner)
+      const handle = document.createElement('div')
+      handle.classList.add('image-resize-handle')
+      wrapper.appendChild(handle)
+
+      // Only show handle when wrapper is selected
+      wrapper.addEventListener('click', (e) => {
+        e.stopPropagation()
+        wrapper.classList.add('selected')
+      })
+
+      document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target)) {
+          wrapper.classList.remove('selected')
+        }
+      })
+
+      // Drag to resize
+      let startX = 0
+      let startWidth = 0
+
+      const onMouseDown = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        startX = e.clientX
+        startWidth = img.offsetWidth
+        document.addEventListener('mousemove', onMouseMove)
+        document.addEventListener('mouseup', onMouseUp)
+        wrapper.classList.add('resizing')
+      }
+
+      const onMouseMove = (e) => {
+        const diff = e.clientX - startX
+        const newWidth = Math.max(50, startWidth + diff)
+        img.style.width = newWidth + 'px'
+      }
+
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove)
+        document.removeEventListener('mouseup', onMouseUp)
+        wrapper.classList.remove('resizing')
+
+        // Commit the new width to the node
+        const pos = getPos()
+        if (typeof pos === 'number') {
+          const newWidth = Math.round(img.offsetWidth)
+          nodeEditor.chain().focus().command(({ tr }) => {
+            tr.setNodeMarkup(pos, undefined, {
+              ...node.attrs,
+              width: newWidth
+            })
+            return true
+          }).run()
+        }
+      }
+
+      handle.addEventListener('mousedown', onMouseDown)
+
+      return {
+        dom: wrapper,
+        update: (updatedNode) => {
+          if (updatedNode.type.name !== 'image') return false
+          img.src = updatedNode.attrs.src
+          if (updatedNode.attrs.width) {
+            img.style.width = updatedNode.attrs.width + 'px'
+          }
+          return true
+        },
+        destroy: () => {
+          handle.removeEventListener('mousedown', onMouseDown)
         }
       }
     }
@@ -561,6 +724,10 @@ defineExpose({ focus, extractMentions })
 }
 
 .tiptap.ProseMirror {
+  p {
+    margin: 0;
+  }
+
   flex: 1;
   min-height: 70px;
   overflow-y: auto;
@@ -611,6 +778,41 @@ defineExpose({ focus, extractMentions })
   // Image selected state
   .ProseMirror-selectednode .inline-image {
     outline: 2px solid #0066cc;
+  }
+
+  // Image resizer wrapper
+  .image-resizer {
+    display: inline-block;
+    position: relative;
+    margin: 4px 0;
+
+    .image-resize-handle {
+      display: none;
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      width: 12px;
+      height: 12px;
+      background: #0066cc;
+      border: 2px solid white;
+      border-radius: 2px;
+      cursor: nwse-resize;
+      z-index: 10;
+    }
+
+    &.selected .image-resize-handle,
+    &.resizing .image-resize-handle {
+      display: block;
+    }
+
+    &.selected .inline-image {
+      outline: 2px solid #0066cc;
+    }
+
+    &.resizing .inline-image {
+      outline: 2px solid #0066cc;
+      opacity: 0.8;
+    }
   }
 
   // Email signature styling
