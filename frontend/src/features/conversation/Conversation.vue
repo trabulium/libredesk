@@ -34,10 +34,10 @@
       </div>
     </div>
 
-    <!-- Freshdesk theme: unified scroll with collapsible reply -->
-    <template v-if="isFreshdesk">
+    <!-- Fresh theme: unified scroll with collapsible reply -->
+    <template v-if="isFresh">
       <!-- Scrollable area: messages + expanded reply -->
-      <div class="flex-1 overflow-y-auto freshdesk-unified-scroll" ref="scrollContainer">
+      <div class="flex-1 overflow-y-auto fresh-unified-scroll" ref="scrollContainer">
         <MessageList />
         <!-- Expanded reply box flows inline with messages -->
         <div v-if="replyExpanded" class="border-t">
@@ -96,7 +96,7 @@ const conversationStore = useConversationStore()
 const emitter = useEmitter()
 const { currentTheme } = useTheme()
 
-const isFreshdesk = computed(() => currentTheme.value === 'freshdesk')
+const isFresh = computed(() => currentTheme.value === 'fresh')
 const replyExpanded = ref(false)
 const scrollContainer = ref(null)
 

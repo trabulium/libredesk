@@ -1,7 +1,7 @@
-// Freshdesk-inspired theme for Libredesk
-// Activated by .theme-freshdesk class on root element
+// Fresh-inspired theme for Libredesk
+// Activated by .theme-fresh class on root element
 
-.theme-freshdesk {
+.theme-fresh {
   // ─── Core palette ───────────────────────────────────────
   --background: 0 0% 100%;
   --foreground: 220 14% 10%;
@@ -45,7 +45,7 @@
 }
 
 // ─── Typography & density ───────────────────────────────
-.theme-freshdesk {
+.theme-fresh {
 
   // Conversation list: bolder names, tighter layout
   // Targets ConversationListItem.vue router-link
@@ -119,35 +119,35 @@
 }
 
 // ─── Unified scroll: disable nested scrollbars ──────────
-// In Freshdesk theme everything scrolls in one container.
+// In Fresh theme everything scrolls in one container.
 // Disable MessageList's own scrollbar and ReplyBox's max-height.
 
 // MessageList root: don't constrain height, let it flow naturally
-.freshdesk-unified-scroll > div {
+.fresh-unified-scroll > div {
   height: auto !important;
 }
 
 // MessageList inner threadEl: no separate scroll
-.freshdesk-unified-scroll > div > div.overflow-y-auto {
+.fresh-unified-scroll > div > div.overflow-y-auto {
   overflow: visible !important;
   flex: none !important;
 }
 
 // ReplyBoxContent: no max-height constraint
-.theme-freshdesk .max-h-\[600px\] {
+.theme-fresh .max-h-\[600px\] {
   max-height: none !important;
   overflow: visible !important;
 }
 
 // ─── Messages: full width instead of 80% ────────────────
-// Default theme constrains messages to w-4/5 (80%). In Freshdesk
+// Default theme constrains messages to w-4/5 (80%). In Fresh
 // theme let them use the full available width.
-.theme-freshdesk .w-4\/5 {
+.theme-fresh .w-4\/5 {
   width: 100% !important;
 }
 
 // ─── Conversation list: subject + ticket number ─────────
-.theme-freshdesk {
+.theme-fresh {
   // Subject line styling - bold and prominent
   .conversation-subject {
     font-weight: 700;
@@ -156,7 +156,7 @@
     line-height: 1.3;
   }
 
-  // Status badges - Freshdesk uses colored pills
+  // Status badges - Fresh uses colored pills
   .conversation-status-badge {
     letter-spacing: 0.02em;
   }

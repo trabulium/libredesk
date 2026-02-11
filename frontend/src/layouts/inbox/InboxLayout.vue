@@ -1,7 +1,7 @@
 <template>
   <div v-if="!isSearchRoute" class="h-screen w-full flex flex-col">
 
-    <!-- Freshdesk theme: show one panel at a time (list OR detail) -->
+    <!-- Fresh theme: show one panel at a time (list OR detail) -->
     <template v-if="hideListOnTicketOpen">
       <!-- Back button when viewing a ticket -->
       <div
